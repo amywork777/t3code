@@ -2,6 +2,7 @@ import * as Schema from "effect/Schema";
 import { GitPreparePullRequestThreadInput } from "./git.ts";
 import {
   AuthOrchestrationOperateScope,
+  AuthProvidersManageScope,
   AuthSettingsWriteScope,
   AuthSourceControlWriteScope,
   type AuthEnvironmentScope,
@@ -11,6 +12,11 @@ import { WS_METHODS } from "./rpc.ts";
 
 /** Incremental client enforcement; the server still authorizes every request. */
 export const CLIENT_GUARDED_RPC_SCOPES = {
+  // Plugins run code on this environment for every provider.
+  [WS_METHODS.pluginsInstall]: AuthProvidersManageScope,
+  [WS_METHODS.pluginsSetEnabled]: AuthProvidersManageScope,
+  [WS_METHODS.pluginsUninstall]: AuthProvidersManageScope,
+  [WS_METHODS.pluginsUpdate]: AuthProvidersManageScope,
   [WS_METHODS.serverRunStorageCleanup]: AuthSettingsWriteScope,
   // Endpoint checks exist to configure exports, so they need the same grant as saving them.
   [WS_METHODS.serverCheckOtlpEndpoint]: AuthSettingsWriteScope,

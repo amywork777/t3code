@@ -367,6 +367,20 @@ import {
   SourceControlRepositoryLookupInput,
 } from "./sourceControl.ts";
 import { VcsError } from "./vcs.ts";
+import {
+  InstalledPlugin,
+  PluginCatalogInput,
+  PluginCatalogResult,
+  PluginIdInput,
+  PluginInstallInput,
+  PluginListResult,
+  PluginOpenViewInput,
+  PluginOperationError,
+  PluginRequestInput,
+  PluginRequestResult,
+  PluginSetEnabledInput,
+  PluginViewDocument,
+} from "./plugins.ts";
 import { Project, ProjectMutation, ProjectMutationError } from "./project.ts";
 
 export const WS_METHODS = {
@@ -486,6 +500,14 @@ export const WS_METHODS = {
   serverGetSettings: "server.getSettings",
   serverUpdateSettings: "server.updateSettings",
   serverDiscoverSourceControl: "server.discoverSourceControl",
+  pluginsCatalog: "plugins.catalog",
+  pluginsList: "plugins.list",
+  pluginsInstall: "plugins.install",
+  pluginsSetEnabled: "plugins.setEnabled",
+  pluginsUninstall: "plugins.uninstall",
+  pluginsUpdate: "plugins.update",
+  pluginsOpenView: "plugins.openView",
+  pluginsRequest: "plugins.request",
   serverSearchAcpRegistry: "server.searchAcpRegistry",
   serverPrepareAcpRegistryAgent: "server.prepareAcpRegistryAgent",
   serverUninstallAcpRegistryManagedBinary: "server.uninstallAcpRegistryManagedBinary",
@@ -780,6 +802,54 @@ const WsServerDiscoverSourceControlRpc = Rpc.make(WS_METHODS.serverDiscoverSourc
   payload: Schema.Struct({}),
   success: SourceControlDiscoveryResult,
   error: EnvironmentAuthorizationError,
+});
+
+const WsPluginsCatalogRpc = Rpc.make(WS_METHODS.pluginsCatalog, {
+  payload: PluginCatalogInput,
+  success: PluginCatalogResult,
+  error: Schema.Union([PluginOperationError, EnvironmentAuthorizationError]),
+});
+
+const WsPluginsListRpc = Rpc.make(WS_METHODS.pluginsList, {
+  payload: Schema.Struct({}),
+  success: PluginListResult,
+  error: Schema.Union([PluginOperationError, EnvironmentAuthorizationError]),
+});
+
+const WsPluginsInstallRpc = Rpc.make(WS_METHODS.pluginsInstall, {
+  payload: PluginInstallInput,
+  success: InstalledPlugin,
+  error: Schema.Union([PluginOperationError, EnvironmentAuthorizationError]),
+});
+
+const WsPluginsSetEnabledRpc = Rpc.make(WS_METHODS.pluginsSetEnabled, {
+  payload: PluginSetEnabledInput,
+  success: InstalledPlugin,
+  error: Schema.Union([PluginOperationError, EnvironmentAuthorizationError]),
+});
+
+const WsPluginsUninstallRpc = Rpc.make(WS_METHODS.pluginsUninstall, {
+  payload: PluginIdInput,
+  success: Schema.Struct({}),
+  error: Schema.Union([PluginOperationError, EnvironmentAuthorizationError]),
+});
+
+const WsPluginsUpdateRpc = Rpc.make(WS_METHODS.pluginsUpdate, {
+  payload: PluginIdInput,
+  success: InstalledPlugin,
+  error: Schema.Union([PluginOperationError, EnvironmentAuthorizationError]),
+});
+
+const WsPluginsOpenViewRpc = Rpc.make(WS_METHODS.pluginsOpenView, {
+  payload: PluginOpenViewInput,
+  success: PluginViewDocument,
+  error: Schema.Union([PluginOperationError, EnvironmentAuthorizationError]),
+});
+
+const WsPluginsRequestRpc = Rpc.make(WS_METHODS.pluginsRequest, {
+  payload: PluginRequestInput,
+  success: PluginRequestResult,
+  error: Schema.Union([PluginOperationError, EnvironmentAuthorizationError]),
 });
 
 const WsServerSearchAcpRegistryRpc = Rpc.make(WS_METHODS.serverSearchAcpRegistry, {
@@ -1905,6 +1975,14 @@ export const WsRpcGroup = RpcGroup.make(
   WsServerGetSettingsRpc,
   WsServerUpdateSettingsRpc,
   WsServerDiscoverSourceControlRpc,
+  WsPluginsCatalogRpc,
+  WsPluginsListRpc,
+  WsPluginsInstallRpc,
+  WsPluginsSetEnabledRpc,
+  WsPluginsUninstallRpc,
+  WsPluginsUpdateRpc,
+  WsPluginsOpenViewRpc,
+  WsPluginsRequestRpc,
   WsServerSearchAcpRegistryRpc,
   WsServerPrepareAcpRegistryAgentRpc,
   WsServerUninstallAcpRegistryManagedBinaryRpc,
