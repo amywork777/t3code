@@ -3,7 +3,7 @@ import type {
   ContextMenuItem as TreeContextMenuItem,
   ContextMenuOpenContext as TreeContextMenuOpenContext,
 } from "@pierre/trees";
-import type { EnvironmentId, ProjectEntry } from "@t3tools/contracts";
+import type { EnvironmentId, ProjectEntry, ScopedThreadRef } from "@t3tools/contracts";
 import { FileTree, useFileTree, useFileTreeSearch, useFileTreeSelector } from "@pierre/trees/react";
 import { serializeComposerFileLink } from "@t3tools/shared/composerTrigger";
 import { ChevronsDownUp, ChevronsUpDown } from "lucide";
@@ -19,6 +19,7 @@ import { writeTextToClipboard } from "~/hooks/useCopyToClipboard";
 import { useTheme } from "~/hooks/useTheme";
 import { useWorkspaceMutationRefresh } from "~/hooks/useWorkspaceMutationRefresh";
 import { useFileContextMenu, type FileContextMenuAction } from "~/fileContextMenu";
+import { usePluginFileMenu } from "~/components/plugins/usePluginFileMenu";
 import { readLocalApi } from "~/localApi";
 import { T3_PIERRE_ICONS } from "~/pierre-icons";
 import { PIERRE_TREE_UNSAFE_CSS, pierreTreeStyle } from "~/pierre-tree-theme";
@@ -40,6 +41,8 @@ interface FileBrowserPanelProps {
   onOpenFile: (relativePath: string) => void;
   onRefreshSelectedFile?: () => void;
   workspaceMutationId: string | null;
+  /** The thread a plugin's "Open with" view opens beside. */
+  threadRef?: ScopedThreadRef;
 }
 
 function treePath(entry: ProjectEntry): string {
@@ -104,10 +107,12 @@ export default function FileBrowserPanel({
   onOpenFile,
   onRefreshSelectedFile,
   workspaceMutationId,
+  threadRef,
 }: FileBrowserPanelProps) {
   const { resolvedTheme } = useTheme();
   const composerRef = useComposerHandleContext();
   const fileContextMenu = useFileContextMenu(environmentId);
+  const pluginFileMenu = usePluginFileMenu(environmentId, threadRef ?? null);
   const {
     entries: directoryEntries,
     load,
@@ -185,12 +190,13 @@ export default function FileBrowserPanel({
       const clicked = await api.contextMenu.show(
         [
           ...fileMenuItems,
+          ...pluginFileMenu.buildItems(relativePath),
           { id: "copy-mention", label: "Copy mention" },
           { id: "add-to-chat", label: "Add to chat" },
         ],
         position,
       );
-      if (clicked === null) return;
+      if (clicked === null || pluginFileMenu.activate(clicked, relativePath)) return;
       // "Open with" submenu selections report the child id ("editor:<id>"),
       // which is not present in the top-level item list.
       const isFileMenuAction =

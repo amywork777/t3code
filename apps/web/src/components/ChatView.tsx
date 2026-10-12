@@ -612,6 +612,7 @@ import { useAssetUrls } from "../assets/assetUrls";
 import { ATTACHMENT_ONLY_BOOTSTRAP_PROMPT } from "@t3tools/shared/composerContextReferences";
 import { recallableComposerPrompt } from "./chat/composerPromptHistory";
 import { observeResize } from "~/lib/observeResize";
+import { PluginThreadViewMenuItems } from "./plugins/PluginThreadViewMenuItems";
 
 const EMPTY_PROVIDERS: ServerProvider[] = [];
 const EMPTY_PROVIDER_MODELS: ServerProvider["models"] = [];
@@ -712,6 +713,7 @@ const DevicePanel = lazy(() =>
   import("./device/DevicePanel").then((module) => ({ default: module.DevicePanel })),
 );
 const FilePreviewPanel = lazy(() => import("./files/FilePreviewPanel"));
+const PluginViewPanel = lazy(() => import("./plugins/PluginViewPanel"));
 const EMPTY_PENDING_FILE_SURFACE_IDS: ReadonlySet<string> = new Set();
 const TYPE_TO_FOCUS_EDITABLE_SELECTOR = [
   "input",
@@ -11112,6 +11114,13 @@ export default function ChatView(props: ChatViewProps) {
     return <NoActiveThreadState />;
   }
 
+  const pluginAddSurfaceItems =
+    isServerThread && activeThreadRef ? (
+      <PluginThreadViewMenuItems
+        environmentId={activeThread.environmentId}
+        threadRef={activeThreadRef}
+      />
+    ) : null;
   const rightPanelContent = activeThreadRef ? (
     renderedRightPanelSurface?.kind === "preview" ? (
       <Suspense fallback={null}>
@@ -11207,6 +11216,15 @@ export default function ChatView(props: ChatViewProps) {
             : undefined
         }
       />
+    ) : renderedRightPanelSurface?.kind === "plugin-app" ? (
+      <Suspense fallback={null}>
+        <PluginViewPanel
+          environmentId={activeThread.environmentId}
+          threadId={activeThread.id}
+          surface={renderedRightPanelSurface}
+          onSendMessage={isServerThread ? sendAppMessage : undefined}
+        />
+      </Suspense>
     ) : renderedRightPanelSurface?.kind === "pull-requests" && activeThreadRef ? (
       <ThreadPullRequestsPanel threadRef={activeThreadRef} />
     ) : renderedRightPanelSurface?.kind === "device" ? (
@@ -12105,6 +12123,7 @@ export default function ChatView(props: ChatViewProps) {
           pullRequestAvailable={pullRequestSurfaceAvailable}
           pullRequestsAvailable={pullRequestsSurfaceAvailable}
           deviceAvailable={activeThreadRef !== null}
+          addSurfaceExtraItems={pluginAddSurfaceItems}
         >
           {rightPanelContent}
         </RightPanelTabs>
@@ -12164,6 +12183,7 @@ export default function ChatView(props: ChatViewProps) {
             pullRequestAvailable={pullRequestSurfaceAvailable}
             pullRequestsAvailable={pullRequestsSurfaceAvailable}
             deviceAvailable={activeThreadRef !== null}
+            addSurfaceExtraItems={pluginAddSurfaceItems}
           >
             {rightPanelContent}
           </RightPanelTabs>

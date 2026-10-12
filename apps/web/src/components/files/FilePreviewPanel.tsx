@@ -1495,6 +1495,8 @@ export default function FilePreviewPanel({
               selectedPathRevealId={revealRequestId}
               onOpenFile={onOpenFile}
               workspaceMutationId={workspaceMutationId}
+              // A draft's thread is not on the server yet, so its plugins cannot run.
+              {...(draft ? {} : { threadRef })}
               {...(previewPath && !isMedia && !isPdf
                 ? { onRefreshSelectedFile: file.refresh }
                 : {})}

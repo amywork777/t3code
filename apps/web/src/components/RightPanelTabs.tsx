@@ -35,6 +35,7 @@ import {
   Globe2,
   Plus,
   TerminalSquare,
+  Puzzle,
 } from "lucide-react";
 import { Volume2, VolumeOff } from "lucide";
 import {
@@ -151,6 +152,8 @@ interface RightPanelTabsProps {
   pullRequestsAvailable: boolean;
   deviceAvailable: boolean;
   pullRequestStatusSeeds?: Readonly<Record<string, PullRequestTabStatusSeed>>;
+  /** More "+" menu rows after the built-in surfaces, such as plugin views. */
+  addSurfaceExtraItems?: ReactNode;
   children: ReactNode;
 }
 
@@ -620,6 +623,8 @@ function surfaceTitle(
       return "Pull requests";
     case "device":
       return surface.title ?? surface.target?.name ?? "Device";
+    case "plugin-app":
+      return surface.title;
     case "preview": {
       const snapshot = surface.resourceId ? sessions[surface.resourceId] : null;
       if (!snapshot || snapshot.navStatus._tag === "Idle") return "Browser";
@@ -709,6 +714,8 @@ function SurfaceIcon({
       ) : (
         <Smartphone className="size-3 shrink-0" />
       );
+    case "plugin-app":
+      return <Puzzle className="size-3 shrink-0" />;
   }
 }
 
@@ -1410,6 +1417,7 @@ export function RightPanelTabs(props: RightPanelTabsProps) {
                       </SurfaceMenuItem>
                     );
                   })}
+                  {props.addSurfaceExtraItems}
                 </MenuPopup>
               </Menu>
             ) : null}
