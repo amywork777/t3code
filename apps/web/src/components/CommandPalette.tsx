@@ -74,6 +74,7 @@ import {
   PaletteIcon,
   RotateCcwIcon,
   SettingsIcon,
+  PuzzleIcon,
   SquarePenIcon,
   SunIcon,
   TextSearchIcon,
@@ -2241,6 +2242,17 @@ function OpenCommandPaletteDialog(props: {
     icon: <SettingsIcon className={ITEM_ICON_CLASS} />,
     run: async () => {
       await navigate({ to: "/settings" });
+    },
+  });
+
+  actionItems.push({
+    kind: "action",
+    value: "action:plugins",
+    searchTerms: ["plugins", "extensions", "marketplace", "install", "mcp", "apps", "skills"],
+    title: "Open plugins",
+    icon: <PuzzleIcon className={ITEM_ICON_CLASS} />,
+    run: async () => {
+      await navigate({ to: "/settings/plugins" });
     },
   });
 

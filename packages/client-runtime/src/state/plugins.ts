@@ -59,6 +59,16 @@ export function createPluginEnvironmentAtoms<R, E>(
       staleTimeMs: 30_000,
       refreshTrigger: ({ environmentId }) => pluginsRevision(environmentId),
     }),
+    /** Fetches every catalog again (`refresh: true`), then re-reads the list and catalog queries. */
+    refreshCatalog: createEnvironmentRpcCommand(runtime, {
+      label: "environment-command:plugins:refresh-catalog",
+      tag: WS_METHODS.pluginsCatalog,
+      concurrency: {
+        mode: "singleFlight",
+        key: ({ environmentId }) => environmentId,
+      },
+      onSettled: invalidatePlugins,
+    }),
     install: createEnvironmentRpcCommand(runtime, {
       label: "environment-command:plugins:install",
       tag: WS_METHODS.pluginsInstall,

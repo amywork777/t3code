@@ -4,6 +4,7 @@ import {
   AuthProvidersManageScope,
   EnvironmentId,
   WS_METHODS,
+  type AuthEnvironmentScope,
   type AuthSessionState,
   type InstalledPlugin,
   type PluginView,
@@ -90,7 +91,7 @@ describe("plugin command permissions", () => {
       run: (_id: EnvironmentId, effect: Effect.Effect<unknown>) => effect,
     } as unknown as EnvironmentRegistry["Service"]),
   );
-  const grant = (scope: string): AuthSessionState => ({
+  const grant = (scope: AuthEnvironmentScope): AuthSessionState => ({
     authenticated: true,
     auth: {
       policy: "remote-reachable",
@@ -98,8 +99,8 @@ describe("plugin command permissions", () => {
       sessionMethods: [],
       sessionCookieName: "test",
     },
-    scopes: [scope as AuthSessionState["scopes"][number]],
-    permissions: [scope as AuthSessionState["scopes"][number]],
+    scopes: [scope],
+    permissions: [scope],
   });
 
   it.effect("installs, toggles, updates and uninstalls only with the provider grant", () =>
