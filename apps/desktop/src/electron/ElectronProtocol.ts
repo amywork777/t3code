@@ -12,6 +12,8 @@ import * as Scope from "effect/Scope";
 
 import * as Electron from "electron";
 
+import { PLUGIN_VIEW_SCHEME } from "../plugins/pluginViewDocuments.ts";
+
 export const DESKTOP_HOST = "app";
 const DESKTOP_PRODUCTION_SCHEME = "t3code";
 const DESKTOP_DEVELOPMENT_SCHEME = "t3code-dev";
@@ -98,7 +100,8 @@ export function makeDesktopContentSecurityPolicy(input: DesktopProtocolRegistrat
     "worker-src 'self' blob:",
     // Document viewers use local Blob URLs and signed assets from runtime environments.
     // HTML viewers retain their own sandbox; the renderer's script policy stays unchanged.
-    "frame-src 'self' blob: http: https:",
+    // Plugin views load from their own `mcp-app://<id>` origins.
+    `frame-src 'self' blob: http: https: ${PLUGIN_VIEW_SCHEME}:`,
     "form-action 'self'",
   ].join("; ");
 }
@@ -140,6 +143,11 @@ function registerDesktopSchemePrivilegesSync(): void {
         corsEnabled: true,
         stream: true,
       },
+    },
+    // Electron keeps only the last registration, so plugin views share this list.
+    {
+      scheme: PLUGIN_VIEW_SCHEME,
+      privileges: { standard: true, secure: true, supportFetchAPI: true },
     },
   ]);
 }
