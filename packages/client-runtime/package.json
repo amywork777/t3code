@@ -399,6 +399,10 @@
       "types": "./src/state/mcpApps.ts",
       "default": "./src/state/mcpApps.ts"
     },
+    "./state/plugins": {
+      "types": "./src/state/plugins.ts",
+      "default": "./src/state/plugins.ts"
+    },
     "./source-control-clients": {
       "types": "./src/sourceControlClients.ts",
       "default": "./src/sourceControlClients.ts"
