@@ -349,14 +349,23 @@ export function PluginViewFrame(props: {
           <Spinner />
         </div>
       ) : (
-        <iframe
-          ref={frameRef}
-          title={target.title}
-          className="block min-h-0 w-full flex-1 border-0"
-          style={{ colorScheme: theme.appearance }}
-          sandbox={"src" in frame ? PLUGIN_VIEW_STAGED_SANDBOX : PLUGIN_VIEW_SRCDOC_SANDBOX}
-          {...("src" in frame ? { src: frame.src } : { srcDoc: frame.srcdoc })}
-        />
+        <>
+          {"srcdoc" in frame ? (
+            // Outside the desktop app a view has no origin of its own, so views that start
+            // workers from blob: URLs (the CAD viewer does) fail to load their content.
+            <p className="text-muted-foreground border-b px-3 py-1.5 text-xs">
+              If this view stays blank, open it in the T3 Code desktop app.
+            </p>
+          ) : null}
+          <iframe
+            ref={frameRef}
+            title={target.title}
+            className="block min-h-0 w-full flex-1 border-0"
+            style={{ colorScheme: theme.appearance }}
+            sandbox={"src" in frame ? PLUGIN_VIEW_STAGED_SANDBOX : PLUGIN_VIEW_SRCDOC_SANDBOX}
+            {...("src" in frame ? { src: frame.src } : { srcDoc: frame.srcdoc })}
+          />
+        </>
       )}
     </div>
   );

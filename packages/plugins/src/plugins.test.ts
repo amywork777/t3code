@@ -311,9 +311,11 @@ describe("the catalog", () => {
       "hooks/hooks.json": {},
       "commands/go.md": "",
     });
+    // Hooks and commands load through the Claude Agent SDK, so they work with Claude only.
     expect(compatibilityOf(local, hooks)).toMatchObject({
       level: "partly",
-      notes: ["T3 Code does not run its hooks, slash commands"],
+      label: "Claude only",
+      notes: ["its hooks, slash commands run with Claude only"],
     });
     expect(
       compatibilityOf(

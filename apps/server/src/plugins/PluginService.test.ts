@@ -284,15 +284,10 @@ describe("plugins", () => {
           const commit = git(files.market, "rev-parse", "HEAD");
           assert.strictEqual(installed.commit, commit);
           assert.strictEqual(installed.updateAvailable, false);
-          const root = NodePath.join(
-            base,
-            "userdata",
-            "plugins",
-            "cache",
-            marketId,
-            "demo",
-            commit.slice(0, 12),
-          );
+          // Cache folder names are shortened, so read the one market folder the install made.
+          const cache = NodePath.join(base, "userdata", "plugins", "cache");
+          const [marketDir] = NodeFS.readdirSync(cache);
+          const root = NodePath.join(cache, marketDir!, "demo", commit.slice(0, 12));
           assert.isTrue(NodeFS.existsSync(NodePath.join(root, "server.mjs")));
           assert.strictEqual(installed.views.length, 2);
           yield* plugins.uninstall("demo");

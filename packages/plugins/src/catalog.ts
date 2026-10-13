@@ -122,8 +122,9 @@ const compatibility = (
 /**
  * Whether a plugin will work in T3 Code, read from its folder (or the entry's
  * inline manifest) without installing it. Works: MCP servers that run here and
- * skills. May need sign-in: a remote server. Partly: parts T3 ignores (hooks,
- * slash commands, subagents, language servers, output styles, ChatGPT apps).
+ * skills. May need sign-in: a remote server. Partly: parts T3 ignores (language
+ * servers, ChatGPT apps). Hooks, slash commands, subagents and output styles load
+ * for Claude only, through the Agent SDK's `plugins` option, so they are noted.
  * Needs Codex: nothing but launchers Codex supplies.
  */
 export function compatibilityOf(
@@ -163,17 +164,18 @@ export function compatibilityOf(
     else if (typeof server.command === "string") local += 1;
   }
   const ignored: Array<string> = [];
+  const claudeOnly: Array<string> = [];
   const has = (key: string, dir?: string, file?: string) =>
     manifest[key] !== undefined ||
     (folder !== null &&
       ((dir !== undefined && folder.isDirectory(dir)) ||
         (file !== undefined && folder.isFile(file))));
   if (has("hooks", undefined, "hooks/hooks.json") || folder?.isFile("hooks.json"))
-    ignored.push("hooks");
-  if (has("commands", "commands")) ignored.push("slash commands");
-  if (has("agents", "agents")) ignored.push("subagents");
+    claudeOnly.push("hooks");
+  if (has("commands", "commands")) claudeOnly.push("slash commands");
+  if (has("agents", "agents")) claudeOnly.push("subagents");
   if (manifest.lspServers !== undefined) ignored.push("a language server");
-  if (has("outputStyles", "output-styles")) ignored.push("output styles");
+  if (has("outputStyles", "output-styles")) claudeOnly.push("output styles");
   const appsFile = folder?.isFile(".app.json")
     ? safely(() => folder.readJson(".app.json"), undefined)
     : undefined;
@@ -181,6 +183,8 @@ export function compatibilityOf(
   if (apps.length > 0) ignored.push("ChatGPT apps");
 
   const usable = local + remote.length + skills;
+  const claudeNote =
+    claudeOnly.length > 0 ? `; its ${claudeOnly.join(", ")} run with Claude only` : "";
   const verb = usable === 1 ? "works" : "work";
   const hosts = [...new Set(remote)].join(", ");
   const parts = [
@@ -213,19 +217,25 @@ export function compatibilityOf(
     return compatibility(
       "partly",
       "Partly",
-      `${parts} ${verb} here; T3 Code does not run its ${skipped.join(", ")}`,
+      `${parts} ${verb} here; T3 Code does not run its ${skipped.join(", ")}${claudeNote}`,
     );
   }
   if (remote.length > 0) {
     return compatibility(
       "signin",
       "May need sign-in",
-      `${parts}; you sign in to ${hosts} if it asks`,
+      `${parts}; you sign in to ${hosts} if it asks${claudeNote}`,
     );
   }
+  if (usable === 0 && claudeOnly.length > 0)
+    return compatibility(
+      "partly",
+      "Claude only",
+      `its ${claudeOnly.join(", ")} run with Claude only`,
+    );
   if (usable === 0)
     return compatibility("partly", "Partly", "it has no MCP servers or skills T3 Code can use");
-  return compatibility("works", "Works", parts);
+  return compatibility("works", "Works", `${parts}${claudeNote}`);
 }
 
 /** Works first, then what works with a sign-in or in part, then what is read on install, then what will not run. */
