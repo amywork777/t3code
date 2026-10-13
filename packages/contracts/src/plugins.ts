@@ -144,6 +144,26 @@ export const InstalledPlugin = Schema.Struct({
 });
 export type InstalledPlugin = typeof InstalledPlugin.Type;
 
+/**
+ * The name an agent sees a plugin tool by on T3's MCP server: `<plugin>__<tool>`,
+ * kept to what every provider accepts. Claude prefixes `mcp__t3-code__` (14
+ * characters) and caps the whole name at 64, so this stays within 50; a longer
+ * one keeps its start and ends in a hash of the full name.
+ */
+export const AGENT_TOOL_NAME_MAX = 50;
+
+export function agentToolName(pluginId: string, tool: string): string {
+  const full = `${pluginId}__${tool}`.replace(/[^A-Za-z0-9_-]/g, "_");
+  if (full.length <= AGENT_TOOL_NAME_MAX) return full;
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < full.length; index += 1) {
+    hash ^= full.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  const suffix = hash.toString(16).padStart(8, "0");
+  return `${full.slice(0, AGENT_TOOL_NAME_MAX - suffix.length - 1)}_${suffix}`;
+}
+
 export const PluginListResult = Schema.Struct({
   plugins: Schema.Array(InstalledPlugin).check(Schema.isMaxLength(500)),
 });

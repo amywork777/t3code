@@ -613,6 +613,7 @@ import { ATTACHMENT_ONLY_BOOTSTRAP_PROMPT } from "@t3tools/shared/composerContex
 import { recallableComposerPrompt } from "./chat/composerPromptHistory";
 import { observeResize } from "~/lib/observeResize";
 import { PluginThreadViewMenuItems } from "./plugins/PluginThreadViewMenuItems";
+import { usePluginFollow } from "./plugins/usePluginFollow";
 
 const EMPTY_PROVIDERS: ServerProvider[] = [];
 const EMPTY_PROVIDER_MODELS: ServerProvider["models"] = [];
@@ -5884,6 +5885,16 @@ export default function ChatView(props: ChatViewProps) {
     shouldUsePlanSidebarSheet,
     threadDetailLoading,
   ]);
+  usePluginFollow({
+    environmentId,
+    threadRef: isServerThread ? activeThreadRef : null,
+    threadKey: activeThreadKey,
+    runningRunId: activeRunningTurnId,
+    items: serverVisibleTurnItems,
+    workspaceRoot: gitCwd,
+    followFiles:
+      clientSettingsHydrated && settings.proactivePanelsEnabled && !shouldUsePlanSidebarSheet,
+  });
   const closePreviewPanel = useCallback(() => {
     if (activeThreadRef) {
       // Closing the panel on a live browser or device floats it instead of dropping it.
