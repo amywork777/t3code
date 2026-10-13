@@ -65,7 +65,10 @@ describe("readPlugin", () => {
           version: "1.0.0",
           mcpServers: "./servers.json",
           skills: "./skills/",
-          interface: { displayName: "Demo" },
+          interface: {
+            displayName: "Demo",
+            defaultPrompt: ["Design a bracket.", "", 7, "Check my part."],
+          },
         },
         "servers.json": {
           mcpServers: { main: { command: "node", args: ["${PLUGIN_ROOT}/server.mjs"] } },
@@ -76,6 +79,7 @@ describe("readPlugin", () => {
     );
     expect(read.format).toBe("codex");
     expect(read.manifest).toMatchObject({ name: "demo", displayName: "Demo", version: "1.0.0" });
+    expect(read.manifest.starterPrompts).toEqual(["Design a bracket.", "Check my part."]);
     expect(Object.keys(read.servers)).toEqual(["main"]);
     expect(read.servers.main!.args).toEqual(["${PLUGIN_ROOT}/server.mjs"]);
     expect(read.skillsDir).toBe("skills");

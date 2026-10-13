@@ -48,6 +48,8 @@ export interface PluginManifest {
   readonly publisher: string | null;
   readonly homepage: string | null;
   readonly category: string | null;
+  /** `interface.defaultPrompt`: what the plugin suggests asking first. */
+  readonly starterPrompts: ReadonlyArray<string>;
   /** The manifest as written, for what this reader does not name. */
   readonly raw: Readonly<Record<string, unknown>>;
 }
@@ -162,6 +164,7 @@ export function describeManifest(
         ? nonEmptyString(author.name)
         : null;
   const name = nonEmptyString(raw.name) ?? fallbackName;
+  const prompts = Array.isArray(face.defaultPrompt) ? face.defaultPrompt : [face.defaultPrompt];
   return {
     name,
     version: nonEmptyString(raw.version),
@@ -170,6 +173,7 @@ export function describeManifest(
     publisher: nonEmptyString(face.developerName) ?? authorName,
     homepage: nonEmptyString(face.websiteURL) ?? nonEmptyString(raw.homepage),
     category: nonEmptyString(face.category) ?? nonEmptyString(raw.category),
+    starterPrompts: prompts.flatMap((prompt) => nonEmptyString(prompt) ?? []).slice(0, 6),
     raw,
   };
 }

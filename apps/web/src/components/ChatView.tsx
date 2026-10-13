@@ -613,6 +613,7 @@ import { ATTACHMENT_ONLY_BOOTSTRAP_PROMPT } from "@t3tools/shared/composerContex
 import { recallableComposerPrompt } from "./chat/composerPromptHistory";
 import { observeResize } from "~/lib/observeResize";
 import { PluginThreadViewMenuItems } from "./plugins/PluginThreadViewMenuItems";
+import { PluginStarterPrompts } from "./plugins/PluginStarterPrompts";
 import { usePluginFollow } from "./plugins/usePluginFollow";
 
 const EMPTY_PROVIDERS: ServerProvider[] = [];
@@ -11719,6 +11720,10 @@ export default function ChatView(props: ChatViewProps) {
                           draftId={draftId}
                           activeProjectRef={activeProjectRef}
                           activeProjectTitle={activeProject?.title ?? null}
+                        />
+                        <PluginStarterPrompts
+                          environmentId={activeProjectRef?.environmentId ?? null}
+                          composerRef={composerRef}
                         />
                       </div>
                     </div>
