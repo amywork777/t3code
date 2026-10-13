@@ -259,7 +259,11 @@ const make = Effect.gen(function* () {
     catalog: store.catalog,
     list: store.list.pipe(Effect.map((plugins) => ({ plugins }))),
     install: (key) => store.install(key).pipe(Effect.flatMap(relist)),
-    update: (pluginId) => store.update(pluginId).pipe(Effect.flatMap(relist)),
+    // Stop the servers before the update replaces the folder they run from.
+    update: (pluginId) =>
+      host
+        .closePlugin(pluginId)
+        .pipe(Effect.andThen(store.update(pluginId)), Effect.flatMap(relist)),
     uninstall: (pluginId) =>
       host.closePlugin(pluginId).pipe(Effect.andThen(store.uninstall(pluginId))),
     setEnabled: (pluginId, enabled) =>

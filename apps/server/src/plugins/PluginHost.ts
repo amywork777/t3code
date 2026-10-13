@@ -91,6 +91,41 @@ const sentence = (cause: unknown) => (cause instanceof Error ? cause.message : S
 const requestFailed = (reason: "server_failed" | "request_failed", message: string) =>
   new PluginOperationError({ reason, message: message.slice(0, 400) });
 
+/**
+ * The live entry at `key`, or one `start`ed in place of a missing, failed or
+ * stale one (closed first). The replacement is registered before anything is
+ * awaited, so callers racing on one stale entry share a single restart instead
+ * of each starting a process and orphaning all but the last.
+ */
+export async function liveOrRestart<T>(
+  entries: Map<string, Promise<T>>,
+  key: string,
+  isLive: (entry: T) => boolean,
+  close: (stale: T) => Promise<void>,
+  start: () => Promise<T>,
+): Promise<T> {
+  let stale: T | null = null;
+  for (;;) {
+    const pending = entries.get(key);
+    if (pending === undefined) break;
+    const existing = await pending.catch(() => null);
+    // Another caller replaced it while this one waited: judge theirs instead.
+    if (entries.get(key) !== pending) continue;
+    if (existing !== null && isLive(existing)) return existing;
+    stale = existing;
+    break;
+  }
+  const next = (async () => {
+    if (stale !== null) await close(stale).catch(() => undefined);
+    return start();
+  })();
+  entries.set(key, next);
+  next.catch(() => {
+    if (entries.get(key) === next) entries.delete(key);
+  });
+  return next;
+}
+
 export class PluginHost extends Context.Service<
   PluginHost,
   {
@@ -107,7 +142,6 @@ export class PluginHost extends Context.Service<
     /** List an enabled plugin's servers' tools in the environment scope and record them. Never fails. */
     readonly listPlugin: (pluginId: string) => Effect.Effect<void>;
     readonly closePlugin: (pluginId: string) => Effect.Effect<void>;
-    readonly closeScope: (scope: string) => Effect.Effect<void>;
   }
 >()("t3/plugins/PluginHost") {}
 
@@ -252,23 +286,16 @@ const make = Effect.gen(function* () {
       const signature = PluginFiles.serverSignature(plugin.root, config);
       return yield* Effect.tryPromise({
         try: async () => {
-          const pending = connections.get(key);
-          if (pending !== undefined) {
-            const existing = await pending.catch(() => null);
-            if (existing !== null && !existing.closed && existing.signature === signature) {
-              if (roots.length > 0) existing.roots = roots;
-              existing.lastUsed = now;
-              return { connection: existing, config };
-            }
-            if (connections.get(key) === pending) connections.delete(key);
-            if (existing !== null) await existing.client.close().catch(() => undefined);
-          }
-          const next = connect(plugin, server, config, roots, signature, now);
-          connections.set(key, next);
-          next.catch(() => {
-            if (connections.get(key) === next) connections.delete(key);
-          });
-          return { connection: await next, config };
+          const live = await liveOrRestart(
+            connections,
+            key,
+            (existing) => !existing.closed && existing.signature === signature,
+            (stale) => stale.client.close(),
+            () => connect(plugin, server, config, roots, signature, now),
+          );
+          if (roots.length > 0) live.roots = roots;
+          live.lastUsed = now;
+          return { connection: live, config };
         },
         catch: (cause) => requestFailed("server_failed", sentence(cause)),
       });
@@ -361,7 +388,6 @@ const make = Effect.gen(function* () {
     request,
     listPlugin,
     closePlugin: (pluginId) => closeWhere((_, serverKey) => serverKey.startsWith(`${pluginId}/`)),
-    closeScope: (scope) => closeWhere((candidate) => candidate === scope),
   });
 });
 
