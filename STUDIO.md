@@ -1,12 +1,13 @@
 # text-to-cad Studio
 
 T3 Code made into a hardware app: agents design parts with the text-to-cad plugin, and the CAD
-view follows their work beside the thread. It is this fork's `amy/hardware` branch, and it ships
-inside [text-to-cad](https://github.com/earthtojake/text-to-cad) as `apps/studio`.
+view follows their work beside the thread. It is this fork's `amy/hardware` branch, pinned inside
+[text-to-cad](https://github.com/earthtojake/text-to-cad) as the `apps/studio` submodule.
 
 ## Run it
 
-From `apps/studio` in a text-to-cad checkout, after `vp i`:
+In a text-to-cad checkout, `git submodule update --init apps/studio`, then from `apps/studio`,
+after `vp i`:
 
 ```sh
 vpr studio            # server and web
@@ -36,4 +37,5 @@ Everything else is upstream T3 Code plus the fork's plugins (`FORK.md` on `main`
 ## Updating
 
 `main` follows upstream T3 Code; rebase `amy/plugins` on it, then `amy/hardware` on that.
-text-to-cad's copy is refreshed from this branch with its `apps/studio/scripts/sync-studio.sh`.
+Push `amy/hardware`, then bump text-to-cad's pin: `git -C apps/studio pull` and commit
+`apps/studio`.
