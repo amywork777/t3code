@@ -438,6 +438,7 @@ const makeWith = (sources: ReadonlyArray<MarketplaceSource>) =>
         views: views.slice(0, 64),
         compatibility: compatibilityOfFolder(PluginFiles.nodeFolder(record.root)),
         updateAvailable: updateAvailable(record, read),
+        starterPrompts: (manifest?.starterPrompts ?? []).map((prompt) => clip(prompt, 300)),
         error: read instanceof Error ? clip(read.message, 400) : serverError,
       };
     };

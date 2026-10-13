@@ -16,7 +16,12 @@ import { vi } from "vite-plus/test";
 
 import { EnvironmentRegistry } from "../connection/registry.ts";
 import { createCommandPermissions } from "./commandPermissions.ts";
-import { pluginFileExtension, pluginFileHandlers, pluginViewsWithEntrypoint } from "./plugins.ts";
+import {
+  pluginFileExtension,
+  pluginFileHandlers,
+  pluginStarterPrompts,
+  pluginViewsWithEntrypoint,
+} from "./plugins.ts";
 
 vi.mock("./session.ts", () => ({
   createEnvironmentSessionAtoms: () => ({ sessionStateAtom: sessions }),
@@ -93,6 +98,23 @@ describe("plugin view matching", () => {
       "workbench",
     ]);
     expect(pluginViewsWithEntrypoint(plugins, "global")).toEqual([]);
+  });
+});
+
+describe("pluginStarterPrompts", () => {
+  it("takes enabled plugins' prompts in order, once each, up to the limit", () => {
+    const plugins = [
+      plugin({ id: "off", enabled: false, starterPrompts: ["Hidden"] }),
+      plugin({ id: "cad", starterPrompts: ["Design a bracket", "Check my part"] }),
+      plugin({ id: "old" }),
+      plugin({ id: "pcb", starterPrompts: ["Design a bracket", "Route my board"] }),
+    ];
+    expect(pluginStarterPrompts(plugins, 3)).toEqual([
+      "Design a bracket",
+      "Check my part",
+      "Route my board",
+    ]);
+    expect(pluginStarterPrompts(plugins, 1)).toEqual(["Design a bracket"]);
   });
 });
 

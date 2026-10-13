@@ -151,3 +151,19 @@ export function pluginFileHandlers(
     view.entrypoints.some((entry) => entry.type === "file" && entry.extensions.some(claims)),
   );
 }
+
+/** What enabled plugins suggest asking first, in install order, without repeats. */
+export function pluginStarterPrompts(
+  plugins: ReadonlyArray<InstalledPlugin>,
+  limit: number,
+): string[] {
+  const prompts = new Set<string>();
+  for (const plugin of plugins) {
+    if (!plugin.enabled) continue;
+    for (const prompt of plugin.starterPrompts ?? []) {
+      if (prompts.size >= limit) return [...prompts];
+      prompts.add(prompt.trim());
+    }
+  }
+  return [...prompts];
+}
