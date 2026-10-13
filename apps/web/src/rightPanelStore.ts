@@ -652,7 +652,20 @@ export const useRightPanelStore = create<RightPanelStoreState>()(
             return state;
           }
           opened = true;
-          return automaticUpdate(state, threadKey, (current) => upsertSurface(current, surface));
+          return automaticUpdate(state, threadKey, (current) =>
+            // An agent reopening a plugin view with new arguments shows them in its tab.
+            surface.kind === "plugin-app"
+              ? upsertSurface(
+                  {
+                    ...current,
+                    surfaces: current.surfaces.map((entry) =>
+                      entry.id === surface.id ? surface : entry,
+                    ),
+                  },
+                  surface,
+                )
+              : upsertSurface(current, surface),
+          );
         });
         return opened;
       },

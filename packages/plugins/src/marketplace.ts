@@ -13,6 +13,7 @@ import {
   isRecord,
   nonEmptyString,
 } from "./folder.ts";
+import { parseGitRemote } from "./git.ts";
 
 export const MARKETPLACE_LOCATIONS = [
   ".agents/plugins/marketplace.json",
@@ -52,7 +53,29 @@ export interface MarketplaceFile {
 }
 
 const githubUrl = (repo: string | null) =>
-  repo === null ? null : `https://github.com/${repo}.git`;
+  repo === null || !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo)
+    ? null
+    : `https://github.com/${repo.replace(/\.git$/, "")}.git`;
+
+/** A remote git may be given: an absolute URL or path, never one that reads as an option. */
+const remoteUrl = (url: string | null) => {
+  if (url === null) return null;
+  try {
+    return parseGitRemote(url).url;
+  } catch {
+    return null;
+  }
+};
+
+/** A full or abbreviated commit id. */
+export const isCommitId = (sha: string) => /^[0-9a-f]{7,64}$/i.test(sha);
+
+/**
+ * A branch or tag name git will take as a refspec and never as an option: no
+ * leading `-`, no whitespace, control characters or `:` (a refspec separator).
+ */
+export const isRefName = (ref: string) =>
+  !ref.startsWith("-") && !/[\s\x00-\x1f\x7f:~^?*[\\]|\.\.|@\{/.test(ref);
 
 /** One entry's `source`, as Codex and Claude Code write it; null when it is not one. */
 export function parseSource(source: unknown): MarketplaceSource | null {
@@ -67,24 +90,27 @@ export function parseSource(source: unknown): MarketplaceSource | null {
     const path = relative === null ? null : insideRelative(relative);
     return path === null ? null : { type: "local", path };
   }
-  const git = (url: string | null, subdir: string | null): MarketplaceSource | null =>
-    url === null
-      ? null
-      : {
-          type: "git",
-          url,
-          ref: nonEmptyString(source.ref),
-          sha: nonEmptyString(source.sha),
-          subdir,
-        };
-  if (kind === "url" || kind === "git") return git(nonEmptyString(source.url), null);
+  const git = (url: string | null, subdir: string | null): MarketplaceSource | null => {
+    if (url === null) return null;
+    const ref = nonEmptyString(source.ref);
+    const sha = nonEmptyString(source.sha);
+    if (ref !== null && !isRefName(ref)) {
+      return { type: "unsupported", reason: `"${ref}" is not a branch or tag name` };
+    }
+    if (sha !== null && !isCommitId(sha)) {
+      return { type: "unsupported", reason: `"${sha}" is not a commit id` };
+    }
+    return { type: "git", url, ref, sha, subdir };
+  };
+  if (kind === "url" || kind === "git") return git(remoteUrl(nonEmptyString(source.url)), null);
   if (kind === "github") return git(githubUrl(nonEmptyString(source.repo)), null);
   if (kind === "git-subdir") {
     const relative = nonEmptyString(source.path);
     const subdir = relative === null ? null : insideRelative(relative);
     if (relative !== null && subdir === null) return null;
+    const url = nonEmptyString(source.url);
     return git(
-      nonEmptyString(source.url) ?? githubUrl(nonEmptyString(source.repo)),
+      url !== null ? remoteUrl(url) : githubUrl(nonEmptyString(source.repo)),
       subdir || null,
     );
   }

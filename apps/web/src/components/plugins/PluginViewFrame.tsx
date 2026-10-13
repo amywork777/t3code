@@ -25,6 +25,12 @@ import { useAtomCommand } from "~/state/use-atom-command";
 import { Button } from "../ui/button";
 import { Spinner } from "../ui/spinner";
 import {
+  cachedPluginView,
+  cachePluginView,
+  forgetPluginView,
+  stagedPluginViewUrl,
+} from "./pluginViewCache";
+import {
   PLUGIN_VIEW_SRCDOC_SANDBOX,
   PLUGIN_VIEW_STAGED_SANDBOX,
   readPluginViewsBridge,
@@ -117,11 +123,25 @@ export function PluginViewFrame(props: {
   }, []);
 
   const argumentsKey = JSON.stringify(target.arguments);
+  const viewKey = JSON.stringify([
+    target.environmentId,
+    target.threadId,
+    target.pluginId,
+    target.server,
+    target.tool,
+    target.file ?? null,
+    argumentsKey,
+  ]);
   useEffect(() => {
     let cancelled = false;
-    // oxlint-disable-next-line react/set-state-in-effect -- Each (re)open starts from a loading state.
-    setLoaded({ _tag: "loading" });
+    // oxlint-disable-next-line react/set-state-in-effect -- Each (re)open starts over; a cached view is ready at once.
     setFrame(null);
+    const cached = cachedPluginView(viewKey);
+    if (cached !== null) {
+      setLoaded({ _tag: "ready", document: cached });
+      return;
+    }
+    setLoaded({ _tag: "loading" });
     void openView({
       environmentId: target.environmentId,
       input: {
@@ -135,6 +155,7 @@ export function PluginViewFrame(props: {
     }).then((result) => {
       if (cancelled) return;
       if (result._tag === "Success") {
+        cachePluginView(viewKey, result.value);
         setLoaded({ _tag: "ready", document: result.value });
       } else if (!isAtomCommandInterrupted(result)) {
         setLoaded({ _tag: "error", message: refusal(result).message });
@@ -152,6 +173,7 @@ export function PluginViewFrame(props: {
     target.tool,
     target.file,
     argumentsKey,
+    viewKey,
     // oxlint-disable-next-line react/exhaustive-effect-dependencies -- Bumped by "Try again" to reopen.
     generation,
   ]);
@@ -168,11 +190,14 @@ export function PluginViewFrame(props: {
     }
     let cancelled = false;
     let staged: string | null = null;
-    void bridge.stage(stagedPluginViewHtml(document_), document_.csp).then(
+    const stage = () => bridge.stage(stagedPluginViewHtml(document_), document_.csp);
+    // A cached view keeps its staged URL (and its storage) until the cache drops it.
+    const shared = stagedPluginViewUrl(viewKey, document_, stage);
+    void (shared ?? stage()).then(
       (url) => {
-        staged = url;
+        if (shared === null) staged = url;
         if (cancelled) {
-          void bridge.release(url);
+          if (shared === null) void bridge.release(url);
           return;
         }
         setFrame({ src: url, origin: stagedPluginViewOrigin(url) });
@@ -185,7 +210,7 @@ export function PluginViewFrame(props: {
       cancelled = true;
       if (staged !== null) void bridge.release(staged);
     };
-  }, [document_]);
+  }, [document_, viewKey]);
 
   const live = { theme, size, props, request };
   const latest = useRef(live);
@@ -334,6 +359,7 @@ export function PluginViewFrame(props: {
   }, [theme, size]);
 
   const reload = () => {
+    forgetPluginView(viewKey);
     setClosed(false);
     setGeneration((value) => value + 1);
   };

@@ -58,9 +58,10 @@ export function usePluginFollow(input: {
   readonly items: ReadonlyArray<OrchestrationV2ProjectedTurnItem>;
   /** The thread's working directory, to make the agent's absolute paths workspace-relative. */
   readonly workspaceRoot: string | null;
-  readonly followFiles: boolean;
+  /** Whether views open on their own: off with proactive panels off, or when the panel is a sheet over the chat. */
+  readonly enabled: boolean;
 }) {
-  const { environmentId, threadRef, threadKey, runningRunId, items, workspaceRoot, followFiles } =
+  const { environmentId, threadRef, threadKey, runningRunId, items, workspaceRoot, enabled } =
     input;
   const list = useEnvironmentQuery(
     threadRef === null ? null : pluginEnvironment.list({ environmentId, input: {} }),
@@ -89,11 +90,13 @@ export function usePluginFollow(input: {
       state.followed.add(item.id);
       const target = pluginFollowTarget(plugins, item);
       if (target === null) continue;
+      if (!enabled) continue;
       if (target.kind === "agent") {
-        agentSurface = agentViewSurface(target.choice, target.arguments, target.path);
+        const file =
+          target.path === null ? null : workspaceRelativePath(target.path, workspaceRoot);
+        agentSurface = agentViewSurface(target.choice, target.arguments, target.path, file);
         continue;
       }
-      if (!followFiles) continue;
       const file = workspaceRelativePath(target.path, workspaceRoot);
       if (file !== null) {
         fileFollow = { surface: pluginAppSurface(target.choice, file), revision: runRevision };
@@ -101,7 +104,7 @@ export function usePluginFollow(input: {
     }
     const panels = useRightPanelStore.getState();
     if (agentSurface !== null) {
-      // The agent asked for this view, so it opens over any panel choice.
+      // The agent asked for this view, so it opens over any panel choice, with its latest arguments.
       panels.openProactive(threadRef, agentSurface, panels.getUserActionRevision(threadRef));
       return;
     }
@@ -113,5 +116,5 @@ export function usePluginFollow(input: {
     }
     // A choice made in the panel since the run started wins over following a file.
     panels.openProactive(threadRef, fileFollow.surface, fileFollow.revision);
-  }, [threadRef, threadKey, plugins, items, workspaceRoot, followFiles]);
+  }, [threadRef, threadKey, plugins, items, workspaceRoot, enabled]);
 }
