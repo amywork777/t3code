@@ -45,8 +45,8 @@ function followState(threadKey: string): ThreadFollowState {
  * redraws the board as the agent saves:
  * - an agent's call to a view's tool (text-to-cad's `cad_open`) opens that
  *   view with the call's arguments, as Codex opens the tab it asked for;
- * - with `followFiles`, when a run writes a file a view claims (a `.step`)
- *   and none of that plugin's views is open yet, the file opens in one. An
+ * - with `followFiles`, when a run's file edit writes a file a view claims (a
+ *   `.step`) and none of that plugin's views is open yet, the file opens in one. An
  *   open view refreshes itself and the agent switches it (`cad_show`), and a
  *   panel choice made during the run wins.
  */
@@ -79,9 +79,9 @@ export function usePluginFollow(input: {
     if (threadRef === null || threadKey === null || plugins === undefined) return;
     const state = followState(threadKey);
     if (state.liveRuns.size === 0) return;
-    // An agent's own call opens over anything; a followed file yields to the user.
-    let next: { readonly surface: PluginAppSurface; readonly revision: number | null } | null =
-      null;
+    // The agent's own call wins over a followed file in the same pass; the last of each counts.
+    let agentSurface: PluginAppSurface | null = null;
+    let fileFollow: { readonly surface: PluginAppSurface; readonly revision: number } | null = null;
     for (const { item } of items) {
       const runRevision = item.runId === null ? undefined : state.liveRuns.get(item.runId);
       if (runRevision === undefined) continue;
@@ -90,31 +90,28 @@ export function usePluginFollow(input: {
       const target = pluginFollowTarget(plugins, item);
       if (target === null) continue;
       if (target.kind === "agent") {
-        next = {
-          surface: agentViewSurface(target.choice, target.arguments, target.path),
-          revision: null,
-        };
+        agentSurface = agentViewSurface(target.choice, target.arguments, target.path);
         continue;
       }
       if (!followFiles) continue;
       const file = workspaceRelativePath(target.path, workspaceRoot);
-      if (file !== null)
-        next = { surface: pluginAppSurface(target.choice, file), revision: runRevision };
+      if (file !== null) {
+        fileFollow = { surface: pluginAppSurface(target.choice, file), revision: runRevision };
+      }
     }
-    if (next === null) return;
     const panels = useRightPanelStore.getState();
-    const open = selectThreadRightPanelState(panels.byThreadKey, threadRef).surfaces;
-    const pluginId = next.surface.pluginId;
-    if (
-      next.revision !== null &&
-      open.some((surface) => surface.kind === "plugin-app" && surface.pluginId === pluginId)
-    ) {
+    if (agentSurface !== null) {
+      // The agent asked for this view, so it opens over any panel choice.
+      panels.openProactive(threadRef, agentSurface, panels.getUserActionRevision(threadRef));
       return;
     }
-    panels.openProactive(
-      threadRef,
-      next.surface,
-      next.revision ?? panels.getUserActionRevision(threadRef),
-    );
+    if (fileFollow === null) return;
+    const pluginId = fileFollow.surface.pluginId;
+    const open = selectThreadRightPanelState(panels.byThreadKey, threadRef).surfaces;
+    if (open.some((surface) => surface.kind === "plugin-app" && surface.pluginId === pluginId)) {
+      return;
+    }
+    // A choice made in the panel since the run started wins over following a file.
+    panels.openProactive(threadRef, fileFollow.surface, fileFollow.revision);
   }, [threadRef, threadKey, plugins, items, workspaceRoot, followFiles]);
 }

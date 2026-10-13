@@ -75,15 +75,21 @@ export const offerDefaults = Effect.gen(function* () {
   const offeredFile = path.join(config.stateDir, "plugins", "offered.json");
   for (const key of defaultPluginKeys(folder.value, names)) {
     if (readOffered(offeredFile).includes(key)) continue;
+    // Recorded only once installed: a failure (an unreadable checkout, a clash with the same
+    // plugin from another catalog) is tried again at the next start.
     yield* plugins.install(key).pipe(
       Effect.tap((installed) =>
         installed.enabled ? Effect.void : plugins.setEnabled(installed.id, true),
+      ),
+      Effect.tap(() =>
+        Effect.sync(() =>
+          PluginFiles.writeJsonFile(offeredFile, [...readOffered(offeredFile), key]),
+        ),
       ),
       Effect.catch((error) =>
         Effect.logWarning("bundled plugin was not installed", { key, error: error.message }),
       ),
     );
-    PluginFiles.writeJsonFile(offeredFile, [...readOffered(offeredFile), key]);
   }
 });
 
