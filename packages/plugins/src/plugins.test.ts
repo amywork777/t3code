@@ -110,6 +110,20 @@ describe("readPlugin", () => {
     expect(bare.servers.linear!.url).toBe("https://mcp.linear.app/mcp");
   });
 
+  it("reads the Agent Plugins standard: a bare plugin.json and the mcp.json beside it", () => {
+    const read = readPlugin(
+      memoryFolder({
+        "plugin.json": { name: "text-to-cad" },
+        "mcp.json": {
+          mcpServers: { cad: { type: "stdio", command: "uvx", args: ["cadgen", "mcp"] } },
+        },
+      }),
+    );
+    expect(read.format).toBe("bare");
+    expect(read.servers.cad!.command).toBe("uvx");
+    expect(read.servers.cad!.args).toEqual(["cadgen", "mcp"]);
+  });
+
   it("uses a marketplace entry's inline manifest only when the folder has none", () => {
     const read = readPlugin(memoryFolder({ "skills/s/SKILL.md": "" }), {
       name: "loose",

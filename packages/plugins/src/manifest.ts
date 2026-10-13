@@ -6,7 +6,7 @@
  * (Codex), `.claude-plugin/plugin.json` (Claude Code), or a bare `plugin.json`.
  * Servers come from `mcpServers` (a path to a JSON file holding
  * `{ "mcpServers": {...} }` or the bare map, or that map inline), else from a
- * `.mcp.json` in the folder; skills from `skills` (a directory of
+ * `.mcp.json` in the folder, else the Agent Plugins standard's `mcp.json`; skills from `skills` (a directory of
  * `<name>/SKILL.md`), else `skills/` when it exists.
  */
 import {
@@ -111,7 +111,7 @@ function parseServer(name: string, value: unknown): PluginServerConfig {
   };
 }
 
-/** The raw server map a manifest or `.mcp.json` declares, without validating each server. */
+/** The raw server map a manifest, `.mcp.json` or `mcp.json` declares, without validating each server. */
 export function rawServersOf(
   folder: PluginFolder | null,
   manifest: Readonly<Record<string, unknown>>,
@@ -124,6 +124,9 @@ export function rawServersOf(
     raw = manifest.mcpServers;
   } else if (folder?.isFile(".mcp.json")) {
     raw = folder.readJson(".mcp.json");
+  } else if (folder?.isFile("mcp.json")) {
+    // The Agent Plugins standard's server config (agent-plugins.org), beside its bare plugin.json.
+    raw = folder.readJson("mcp.json");
   }
   if (!isRecord(raw)) return {};
   // Claude Code also accepts a bare map of servers, without the `mcpServers` key (Linear's plugin).
