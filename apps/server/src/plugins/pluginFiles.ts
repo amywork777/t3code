@@ -9,13 +9,14 @@
  * turns a missing credential into an error instead of a prompt nobody sees,
  * `GIT_LFS_SKIP_SMUDGE=1` leaves LFS objects as pointers (a plugin is code and
  * skills), and a clone lands in a temporary sibling renamed into place only
- * when complete, so a half clone is never read.
+ * when complete, so a half clone is never read. A URL, ref or commit comes from a
+ * marketplace file, so each follows `--end-of-options` and git never reads one as a flag.
  */
 import * as NodeChildProcess from "node:child_process";
 import * as NodeCrypto from "node:crypto";
 import * as NodeFS from "node:fs";
 import * as NodePath from "node:path";
-import * as NodeUrl from "node:url";
+import * as NodeURL from "node:url";
 
 import { type PluginFolder, PluginReadError } from "@t3tools/plugins";
 
@@ -137,19 +138,34 @@ export async function shallowClone(
   const temporary = temporarySibling(dir);
   try {
     await git(["init", "-q", temporary]);
-    await git(["remote", "add", "origin", url], temporary);
+    await git(["remote", "add", "--end-of-options", "origin", url], temporary);
     try {
       await git(
-        ["fetch", "-q", "--depth", "1", "origin", options.sha ?? options.ref ?? "HEAD"],
+        [
+          "fetch",
+          "-q",
+          "--depth",
+          "1",
+          "--end-of-options",
+          "origin",
+          options.sha ?? options.ref ?? "HEAD",
+        ],
         temporary,
       );
     } catch (error) {
       // A server that will not serve a commit by its id: fetch the ref and look for it there.
       if (!options.sha) throw error;
-      await git(["fetch", "-q", "--depth", "50", "origin", options.ref ?? "HEAD"], temporary);
+      await git(
+        ["fetch", "-q", "--depth", "50", "--end-of-options", "origin", options.ref ?? "HEAD"],
+        temporary,
+      );
     }
-    await git(["checkout", "-q", "--detach", options.sha ?? "FETCH_HEAD"], temporary);
-    const commit = await git(["rev-parse", "HEAD"], temporary);
+    // checkout takes no --end-of-options with --detach, so it gets the resolved commit id.
+    const commit = await git(
+      ["rev-parse", "--verify", "--end-of-options", `${options.sha ?? "FETCH_HEAD"}^{commit}`],
+      temporary,
+    );
+    await git(["checkout", "-q", "--detach", commit], temporary);
     NodeFS.rmSync(dir, { recursive: true, force: true });
     NodeFS.renameSync(temporary, dir);
     return commit;
@@ -248,7 +264,7 @@ export function moveFolder(from: string, to: string): void {
   NodeFS.renameSync(from, to);
 }
 
-export const fileUrl = (target: string) => NodeUrl.pathToFileURL(target).href;
+export const fileUrl = (target: string) => NodeURL.pathToFileURL(target).href;
 
 /** What a server is started from: a changed config restarts its processes. */
 export const serverSignature = (root: string, config: unknown) =>

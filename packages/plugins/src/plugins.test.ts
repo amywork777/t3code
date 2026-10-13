@@ -212,6 +212,28 @@ describe("readMarketplace", () => {
     );
     expect(market.plugins[0]!.source).toEqual({ type: "local", path: "" });
   });
+
+  it("refuses a git source whose URL, ref or commit git would read as an option", () => {
+    const market = readMarketplace(
+      memoryFolder({
+        "marketplace.json": {
+          plugins: [
+            { name: "url", source: { source: "url", url: "--upload-pack=touch /tmp/x" } },
+            { name: "ref", source: { source: "github", repo: "x/y", ref: "--upload-pack=x" } },
+            { name: "sha", source: { source: "github", repo: "x/y", sha: "-c" } },
+            { name: "fine", source: { source: "github", repo: "x/y", ref: "main" } },
+          ],
+        },
+      }),
+      "fallback",
+    );
+    expect(market.plugins.map((plugin) => plugin.source.type)).toEqual([
+      "unsupported",
+      "unsupported",
+      "unsupported",
+      "git",
+    ]);
+  });
 });
 
 describe("git remotes", () => {

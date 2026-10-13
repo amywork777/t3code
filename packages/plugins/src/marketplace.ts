@@ -67,16 +67,16 @@ export function parseSource(source: unknown): MarketplaceSource | null {
     const path = relative === null ? null : insideRelative(relative);
     return path === null ? null : { type: "local", path };
   }
-  const git = (url: string | null, subdir: string | null): MarketplaceSource | null =>
-    url === null
-      ? null
-      : {
-          type: "git",
-          url,
-          ref: nonEmptyString(source.ref),
-          sha: nonEmptyString(source.sha),
-          subdir,
-        };
+  const git = (url: string | null, subdir: string | null): MarketplaceSource | null => {
+    if (url === null) return null;
+    const ref = nonEmptyString(source.ref);
+    const sha = nonEmptyString(source.sha);
+    // git would read a leading dash as one of its own options.
+    if ([url, ref, sha].some((value) => value?.startsWith("-"))) {
+      return { type: "unsupported", reason: "its git source names a URL or ref git cannot take" };
+    }
+    return { type: "git", url, ref, sha, subdir };
+  };
   if (kind === "url" || kind === "git") return git(nonEmptyString(source.url), null);
   if (kind === "github") return git(githubUrl(nonEmptyString(source.repo)), null);
   if (kind === "git-subdir") {
