@@ -62,7 +62,7 @@ import * as ProjectSettingsOverrideSweep from "./provider/ProjectSettingsOverrid
 import * as TerminalManager from "./terminal/Manager.ts";
 import * as McpHttpServer from "./mcp/McpHttpServer.ts";
 import * as PluginService from "./plugins/PluginService.ts";
-import * as PluginStore from "./plugins/PluginStore.ts";
+import * as BundledPlugins from "./plugins/BundledPlugins.ts";
 import * as McpSessionRegistry from "./mcp/McpSessionRegistry.ts";
 import * as PreviewAutomationBroker from "./mcp/PreviewAutomationBroker.ts";
 import * as DeviceService from "./device/DeviceService.ts";
@@ -621,7 +621,7 @@ const layerRuntimeCoreDependenciesBase = Layer.mergeAll(
 
 const layerRuntimeCoreDependencies = layerRuntimeCoreDependenciesBase.pipe(
   // Installed plugins: provider adapters load their skills, routes and MCP serve their tools.
-  Layer.provideMerge(PluginStore.layer),
+  Layer.provideMerge(BundledPlugins.storeLayer),
   Layer.provideMerge(layerPtyAdapter),
   // Search, prepare, status inspection, and turn launch share one registry
   // cache so every client and provider instance sees the same prepared agents.
@@ -675,7 +675,9 @@ const layerRuntimeCoreDependencies = layerRuntimeCoreDependenciesBase.pipe(
   ),
 );
 
-const layerRuntimeDependencies = layerRuntimeCoreDependencies.pipe(
+const layerRuntimeDependencies = BundledPlugins.layer.pipe(
+  // Offers the app's bundled plugins once the plugin service is up.
+  Layer.provideMerge(layerRuntimeCoreDependencies),
   // Misc.
   // Usage reads provider history through the ProviderHost, which needs the
   // background policy below it.

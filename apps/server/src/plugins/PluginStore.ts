@@ -68,6 +68,15 @@ export type MarketplaceSource =
 export const DEFAULT_MARKETPLACE_SOURCES: ReadonlyArray<MarketplaceSource> =
   DEFAULT_MARKETPLACES.map((market) => ({ type: "git", repository: market.repository }));
 
+/** The id the store gives a folder marketplace, from the folder's name. */
+export const folderMarketplaceId = (dir: string) =>
+  `local-${slugOf(
+    dir
+      .replace(/[\\/]+$/, "")
+      .split(/[\\/]/)
+      .at(-1) ?? dir,
+  )}`;
+
 const STALE_AFTER_MS = 6 * 60 * 60 * 1000;
 
 /** One server's last listing, as recorded in the registry. */
@@ -233,7 +242,7 @@ const makeWith = (sources: ReadonlyArray<MarketplaceSource>) =>
     const markets: ReadonlyArray<Market> = sources.map((source) => {
       if (source.type === "folder") {
         return {
-          id: `local-${slugOf(path.basename(source.path))}`,
+          id: folderMarketplaceId(source.path),
           source: source.path,
           url: null,
           dir: source.path,
