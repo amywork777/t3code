@@ -6,6 +6,7 @@ export function T3Wordmark(props: SVGProps<SVGSVGElement>) {
   if (APP_MARK_URL !== null) {
     return (
       <img
+        data-brand-mark=""
         src={APP_MARK_URL}
         alt={props["aria-label"] ?? ""}
         aria-hidden={props["aria-hidden"]}

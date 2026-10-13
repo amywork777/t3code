@@ -32,13 +32,13 @@ Everything else is upstream T3 Code plus the fork's plugins (`FORK.md` on `main`
   (`apps/server/src/plugins/BundledPlugins.ts`); a plugin the user uninstalls stays uninstalled.
 - **Starter prompts.** A new thread offers what the enabled plugins suggest asking first
   (`interface.defaultPrompt`).
-- **text-to-cad's brand.** `brand/` holds text-to-cad's own mark, icons and accent (its README
-  says where each comes from). `T3CODE_BRAND_DIR` puts them in the page title, favicons, the
-  sidebar and welcome mark, the default accent (a theme the user picks keeps its colors) and the
-  desktop dock icon (`apps/web/vite/brand.ts`); `VITE_APP_BASE_NAME` names the app, its assistant
-  messages and the desktop window. Other mentions of T3 Code stay: they describe T3's own
-  machinery (T3 Connect, its desktop updates), and rewording them would make every rebase
-  conflict.
+- **text-to-cad's look.** It's named Studio and wears text-to-cad's brand kit, not T3's: the CAD
+  viewer's neutral palette (charcoal in dark), its animated mark on the loading splash, its mark
+  beside the name, its favicons and dock icon (`brand/`, see its README). `T3CODE_BRAND_DIR` applies
+  them (`apps/web/vite/brand.ts`) and `VITE_APP_BASE_NAME` names the app, its assistant messages and
+  the desktop window. A theme the user picks keeps its own colors. T3's stage artwork gives way to
+  its small stage pill. Other mentions of T3 Code stay: they describe T3's own machinery (T3
+  Connect, its desktop updates), and rewording them would make every rebase conflict.
 
 ## Updating
 

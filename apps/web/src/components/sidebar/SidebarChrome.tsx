@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { memo, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 
-import { APP_WORDMARK_SUFFIX } from "../../branding";
+import { APP_MARK_URL, APP_WORDMARK_SUFFIX } from "../../branding";
 import { useEnvironmentIdentificationMode } from "../../hooks/useSettings";
 import { cn } from "../../lib/utils";
 import { usePullRequestsSupported } from "../../state/environments";
@@ -38,7 +38,10 @@ export const SidebarChromeHeader = memo(function SidebarChromeHeader({
   isElectron: boolean;
 }) {
   const stageLabel = useEnvironmentStageLabel();
-  const environmentIdentificationMode = useEnvironmentIdentificationMode();
+  const identificationSetting = useEnvironmentIdentificationMode();
+  // A fork's mark stands in for T3's stage artwork; the stage shows as a pill instead.
+  const environmentIdentificationMode =
+    APP_MARK_URL !== null && identificationSetting === "artwork" ? "pill" : identificationSetting;
   const backdropVariant = resolveSidebarStageBackdropVariant(
     stageLabel,
     environmentIdentificationMode === "artwork",
