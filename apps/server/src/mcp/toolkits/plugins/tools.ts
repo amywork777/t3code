@@ -6,8 +6,9 @@
  * the same ones its views use. Tools a server marks for its UI alone
  * (`ui.visibility: ["app"]`) are not listed.
  *
- * The list follows installs and toggles: a tool is registered when it first
- * appears and listed only while its plugin offers it. Only thread callers may
+ * The list follows installs, updates and toggles: a tool is registered when it
+ * first appears or its definition changes, and listed only while its plugin
+ * offers it. Only thread callers may
  * call one; an outside MCP client has no thread for the processes to run in.
  * McpHttpServer passes in its `addTool`, the one place registrations happen.
  */
@@ -15,6 +16,7 @@ import { McpSchema } from "effect/ai";
 import type { McpServer } from "effect/ai";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
+import * as Equal from "effect/Equal";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 import * as Stream from "effect/Stream";
@@ -38,7 +40,8 @@ export const register = (addTool: AddTool) =>
     if (Option.isNone(service)) return;
     const plugins = service.value;
     const offered = new Set<string>();
-    const registered = new Set<string>();
+    /** Each registered tool's definition, so a changed one registers again. */
+    const registered = new Map<string, unknown>();
 
     const handle = (name: string) => (payload: unknown) =>
       Effect.withFiber((fiber) => {
@@ -71,11 +74,11 @@ export const register = (addTool: AddTool) =>
       offered.clear();
       for (const tool of tools) offered.add(tool.name);
       for (const tool of tools) {
-        if (registered.has(tool.name)) continue;
         const { _meta: _ignored, ...definition } = tool.tool;
+        if (Equal.equals(registered.get(tool.name), definition)) continue;
         const decoded = yield* decodeTool({ ...definition, name: tool.name }).pipe(Effect.option);
         if (Option.isNone(decoded)) continue;
-        registered.add(tool.name);
+        registered.set(tool.name, definition);
         const name = tool.name;
         yield* addTool({
           tool: decoded.value,
