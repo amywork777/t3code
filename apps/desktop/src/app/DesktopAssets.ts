@@ -79,6 +79,11 @@ function resolveSourceTreeIconPath(
   ext: keyof DesktopIconPaths,
 ): string | undefined {
   if (environment.isPackaged || ext === "icns") return undefined;
+  // A fork's brand folder (apps/web/vite/brand.ts) replaces the dock and window icons.
+  const brandDir = process.env.T3CODE_BRAND_DIR?.trim();
+  if (brandDir) {
+    return environment.path.join(brandDir, ext === "ico" ? "favicon.ico" : "app-icon.png");
+  }
   const brand = environment.isDevelopment ? "dev" : "prod";
   const fileNames = sourceTreeIconFileNames[brand];
   const fileName =

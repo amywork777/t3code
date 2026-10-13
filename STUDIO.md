@@ -15,7 +15,7 @@ vpr studio:desktop    # the Electron app
 ```
 
 `scripts/studio.ts` reads the checkout as a plugin marketplace and turns its `text-to-cad`
-plugin on at first start, names the app, and keeps state in `~/.text-to-cad-studio` (never in
+plugin on at first start, brands the app from `brand/`, and keeps state in `~/.text-to-cad-studio` (never in
 T3 Code's `~/.t3`). `TEXT_TO_CAD_ROOT` points at another checkout; `TEXT_TO_CAD_STUDIO_HOME`
 moves the state.
 
@@ -32,10 +32,22 @@ Everything else is upstream T3 Code plus the fork's plugins (`FORK.md` on `main`
   (`apps/server/src/plugins/BundledPlugins.ts`); a plugin the user uninstalls stays uninstalled.
 - **Starter prompts.** A new thread offers what the enabled plugins suggest asking first
   (`interface.defaultPrompt`).
-- **Its own name.** `VITE_APP_BASE_NAME`.
+- **text-to-cad's brand.** `brand/` holds text-to-cad's own mark, icons and accent (its README
+  says where each comes from). `T3CODE_BRAND_DIR` puts them in the page title, favicons, the
+  sidebar and welcome mark, the default accent (a theme the user picks keeps its colors) and the
+  desktop dock icon (`apps/web/vite/brand.ts`); `VITE_APP_BASE_NAME` names the app, its assistant
+  messages and the desktop window. Other mentions of T3 Code stay: they describe T3's own
+  machinery (T3 Connect, its desktop updates), and rewording them would make every rebase
+  conflict.
 
 ## Updating
 
-`main` follows upstream T3 Code; rebase `amy/plugins` on it, then `amy/hardware` on that.
-Push `amy/hardware`, then bump text-to-cad's pin: `git -C apps/studio pull` and commit
-`apps/studio`.
+One command takes in a new T3 Code: from the fork's `main` checkout,
+`scripts/sync-upstream.sh --push` rebases `main` onto upstream, `amy/plugins` onto that, and
+`amy/hardware` onto `amy/plugins`, stopping at the first conflict. Then bump text-to-cad's pin:
+`git -C apps/studio pull` and commit `apps/studio`.
+
+Rebases stay clean because the branch adds files rather than editing T3's: an edit to an upstream
+file is a seam of a line or a few (`scripts/fork-diff.sh amy/hardware` lists them). Keep it that
+way: new behaviour goes in new files, and a T3 string or style is changed through `brand/`, not
+in place.

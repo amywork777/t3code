@@ -6,7 +6,7 @@
  *
  * - reads the checkout as a plugin marketplace and installs and enables its
  *   `text-to-cad` plugin on first start (apps/server/src/plugins/BundledPlugins.ts);
- * - names the app "text-to-cad Studio";
+ * - names and brands the app from `brand/` (text-to-cad's mark, icons and accent);
  * - keeps its state in `~/.text-to-cad-studio`, never in T3 Code's own home.
  *
  * TEXT_TO_CAD_ROOT points at another checkout; TEXT_TO_CAD_STUDIO_HOME moves the state.
@@ -35,6 +35,9 @@ if (mode !== "dev" && mode !== "dev:desktop") {
 const home =
   process.env.TEXT_TO_CAD_STUDIO_HOME?.trim() ||
   NodePath.join(NodeOS.homedir(), ".text-to-cad-studio");
+// text-to-cad's name, mark, icons and accent (brand/README.md).
+const brandDir = NodePath.join(appRoot, "brand");
+const brand = JSON.parse(NodeFS.readFileSync(NodePath.join(brandDir, "brand.json"), "utf8"));
 
 const run = NodeChildProcess.spawnSync(
   process.execPath,
@@ -52,7 +55,8 @@ const run = NodeChildProcess.spawnSync(
       ...process.env,
       T3CODE_PLUGIN_MARKETPLACE: checkout,
       T3CODE_DEFAULT_PLUGINS: "text-to-cad",
-      VITE_APP_BASE_NAME: "text-to-cad Studio",
+      VITE_APP_BASE_NAME: brand.name,
+      T3CODE_BRAND_DIR: brandDir,
     },
   },
 );

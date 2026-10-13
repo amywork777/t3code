@@ -1,6 +1,18 @@
 import type { SVGProps } from "react";
 
+import { APP_MARK_URL } from "~/branding";
+
 export function T3Wordmark(props: SVGProps<SVGSVGElement>) {
+  if (APP_MARK_URL !== null) {
+    return (
+      <img
+        src={APP_MARK_URL}
+        alt={props["aria-label"] ?? ""}
+        aria-hidden={props["aria-hidden"]}
+        className={props.className}
+      />
+    );
+  }
   return (
     <svg {...props} viewBox="15.5309 37 94.3941 56.96" xmlns="http://www.w3.org/2000/svg">
       <path

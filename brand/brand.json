@@ -1,0 +1,9 @@
+{
+  "name": "text-to-cad Studio",
+  "primary": {
+    "light": "#2c7197",
+    "lightForeground": "#ffffff",
+    "dark": "#62b7ec",
+    "darkForeground": "#0a0a0a"
+  }
+}
