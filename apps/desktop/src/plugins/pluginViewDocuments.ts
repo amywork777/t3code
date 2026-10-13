@@ -18,7 +18,9 @@ export const PLUGIN_VIEW_SCHEME = "mcp-app";
 /** Documents the renderer may hold at once; one that never releases (a reload) cannot grow this. */
 export const MAX_STAGED_PLUGIN_VIEWS = 64;
 
-const DOMAIN = /^(?:https?:\/\/|wss?:\/\/)?[A-Za-z0-9*.-]+(?::\d+|:\*)?(?:\/[^\s;,'"]*)?$/;
+/** A host source with a real host: `*` only as a leading `*.` label, never alone. */
+const DOMAIN =
+  /^(?:https?:\/\/|wss?:\/\/)?(?:\*\.)?[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*(?::\d+|:\*)?(?:\/[^\s;,'"]*)?$/;
 /** Scheme sources a view may name: pages that build workers and models from `blob:`/`data:` URLs fetch them. */
 const SCHEMES = new Set(["data:", "blob:"]);
 

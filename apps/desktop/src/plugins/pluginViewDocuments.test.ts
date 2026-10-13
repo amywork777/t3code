@@ -37,6 +37,23 @@ describe("plugin view policy", () => {
     expect(policy["script-src"]).not.toContain("*");
     expect(policy["img-src"]).toEqual(["data:", "blob:", "https://cdn.example.com"]);
   });
+
+  it("takes a wildcard only in front of a real host", () => {
+    const policy = directives(
+      pluginViewContentSecurityPolicy({
+        connectDomains: [
+          "*",
+          "https://*",
+          "wss://*:443",
+          "*.",
+          "*.*",
+          "https://*.example.com",
+          "localhost:*",
+        ],
+      }),
+    );
+    expect(policy["connect-src"]).toEqual(["https://*.example.com", "localhost:*"]);
+  });
 });
 
 describe("staged plugin views", () => {

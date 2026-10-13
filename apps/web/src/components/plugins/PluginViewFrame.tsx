@@ -15,7 +15,7 @@ import {
 import { readMcpAppCsp } from "@t3tools/shared/mcpApp";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
-import { APP_VERSION } from "~/branding";
+import { APP_BASE_NAME, APP_VERSION } from "~/branding";
 import { requestConfirmDialog } from "~/confirmDialog";
 import { isElectron } from "~/env";
 import { useHtmlRenderTheme } from "~/hooks/useHtmlRenderTheme";
@@ -354,7 +354,7 @@ export function PluginViewFrame(props: {
             // Outside the desktop app a view has no origin of its own, so views that start
             // workers from blob: URLs (the CAD viewer does) fail to load their content.
             <p className="text-muted-foreground border-b px-3 py-1.5 text-xs">
-              If this view stays blank, open it in the T3 Code desktop app.
+              If this view stays blank, open it in the {APP_BASE_NAME} desktop app.
             </p>
           ) : null}
           <iframe
