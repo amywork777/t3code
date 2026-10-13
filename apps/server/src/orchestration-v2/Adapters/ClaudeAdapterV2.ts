@@ -139,6 +139,7 @@ import {
 } from "@t3tools/provider-core/server/mcpToolPresentation";
 import * as McpProviderSession from "@t3tools/provider-core/server/mcpSession";
 import * as McpProviderSessions from "@t3tools/provider-core/server/McpProviderSessions";
+import * as PluginStore from "../../plugins/PluginStore.ts";
 import * as IdAllocator from "@t3tools/provider-core/server/IdAllocator";
 import {
   makeProviderFailure,
@@ -3332,6 +3333,7 @@ export const makeClaudeAdapterV2 = Effect.fn("makeClaudeAdapterV2")(function* (
   adapterOptions: ClaudeAdapterV2Options,
 ) {
   const mcpSessions = yield* McpProviderSessions.McpProviderSessions;
+  const pluginStore = yield* Effect.serviceOption(PluginStore.PluginStore);
   const { attachmentsDir, fileSystem, path, crypto, idAllocator, queryRunner } = adapterOptions;
   // Subagent model names and effort levels, including the instance's custom models.
   const subagentModelCatalog = scopeClaudeModelCatalog(
@@ -8379,7 +8381,7 @@ export const makeClaudeAdapterV2 = Effect.fn("makeClaudeAdapterV2")(function* (
             .open({
               threadId: turnInput.threadId,
               providerSessionId: input.providerSessionId,
-              options: queryOptions,
+              options: yield* PluginStore.withClaudePlugins(pluginStore, queryOptions),
             })
             .pipe(
               // An interrupted open leaves the old process just as dead.

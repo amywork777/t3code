@@ -117,6 +117,7 @@ import { codexAppServerArgs, resolveCodexLaunchArgs } from "../../provider/codex
 import { mergeProviderInstanceEnvironment } from "@t3tools/provider-core/server/instanceEnvironment";
 import * as McpProviderSession from "@t3tools/provider-core/server/mcpSession";
 import * as McpProviderSessions from "@t3tools/provider-core/server/McpProviderSessions";
+import * as PluginStore from "../../plugins/PluginStore.ts";
 import {
   MCP_APP_EXTENSION_ID,
   MCP_APP_MIME_TYPE,
@@ -1699,6 +1700,7 @@ export const makeCodexAdapterV2 = Effect.fn("makeCodexAdapterV2")(function* (
   adapterOptions: CodexAdapterV2Options,
 ) {
   const mcpSessions = yield* McpProviderSessions.McpProviderSessions;
+  const pluginStore = yield* Effect.serviceOption(PluginStore.PluginStore);
   const readMcpSession = (threadId: ThreadId | null) =>
     threadId === null ? Effect.succeed(undefined) : mcpSessions.read(threadId);
   const { clientFactory, crypto, fileSystem, idAllocator, serverConfig } = adapterOptions;
@@ -1807,6 +1809,12 @@ export const makeCodexAdapterV2 = Effect.fn("makeCodexAdapterV2")(function* (
                 }),
               );
             yield* client.notify("initialized", undefined);
+            const pluginSkillRoots = yield* PluginStore.codexSkillRoots(pluginStore);
+            if (pluginSkillRoots.length > 0) {
+              yield* client
+                .request("skills/extraRoots/set", { extraRoots: pluginSkillRoots })
+                .pipe(Effect.ignore);
+            }
             yield* Ref.set(initialized, true);
           }),
         );

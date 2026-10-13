@@ -58,6 +58,7 @@ import {
 } from "./toolkits/device/tools.ts";
 import * as HtmlHandlers from "./toolkits/html/handlers.ts";
 import { HtmlPreviewTool, HtmlPreviewToolkit, HtmlRenderToolkit } from "./toolkits/html/tools.ts";
+import * as PluginTools from "./toolkits/plugins/tools.ts";
 
 /** Where an MCP client discovers how to sign in (RFC 9728), at this request's own origin. */
 const mcpResourceMetadataUrl = (request: HttpServerRequest.HttpServerRequest) =>
@@ -878,4 +879,8 @@ export const layer = Layer.mergeAll(
   layerPullRequestsToolkit,
   layerDeviceToolkit,
   layerHtmlToolkit,
+  // Plugin tools follow installs, so they register through addTool for as long as the server runs.
+  Layer.effectDiscard(
+    Effect.flatMap(McpServer.McpServer, (server) => PluginTools.register(server.addTool)),
+  ),
 ).pipe(Layer.provideMerge(layerMcpTransport));
