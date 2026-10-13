@@ -11,6 +11,11 @@ push=false
 
 root="$(git rev-parse --show-toplevel)"
 cd "$root"
+# The root may switch to a branch without these scripts, so keep fork-diff.sh and come back at the end.
+start_branch="$(git branch --show-current)"
+tools="$(mktemp -d)"
+cp "$root/scripts/fork-diff.sh" "$tools/"
+trap 'rm -rf "$tools"' EXIT
 
 if ! git remote get-url upstream >/dev/null 2>&1; then
   git remote add upstream https://github.com/pingdotgg/t3code.git
@@ -50,8 +55,12 @@ if has amy/plugins; then
   if has amy/hardware; then rebase_branch amy/hardware "$old_plugins" amy/plugins; fi
 fi
 
-"$root/scripts/fork-diff.sh" amy/plugins || true
+if [[ -n "$start_branch" && "$(git branch --show-current)" != "$start_branch" ]]; then
+  git switch -q "$start_branch"
+fi
+
+"$tools/fork-diff.sh" amy/plugins || true
 if has amy/hardware; then
-  "$root/scripts/fork-diff.sh" amy/hardware || true
+  "$tools/fork-diff.sh" amy/hardware || true
   echo "text-to-cad pins amy/hardware at apps/studio: once it is pushed, git -C apps/studio pull and commit apps/studio there."
 fi
