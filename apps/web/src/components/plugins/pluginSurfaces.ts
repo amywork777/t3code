@@ -5,15 +5,21 @@ import type { PluginAppSurface } from "~/rightPanelStore";
 const fileName = (path: string) =>
   path.slice(Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\")) + 1) || path;
 
+const viewKey = (choice: PluginViewChoice) =>
+  [choice.pluginId, choice.view.server, choice.view.tool].map(encodeURIComponent).join("/");
+
+/** The tab id of one view, and of one workspace file in it. */
+const fileSurfaceId = (choice: PluginViewChoice, file?: string): PluginAppSurface["id"] =>
+  `plugin:${viewKey(choice)}${file === undefined ? "" : `:${encodeURIComponent(file)}`}`;
+
 /**
  * The right-panel tab for a plugin view. One tab per view, and per file for a
  * view that opens files, so opening the same thing again focuses its tab.
  */
 export function pluginAppSurface(choice: PluginViewChoice, file?: string): PluginAppSurface {
   const { view } = choice;
-  const key = [choice.pluginId, view.server, view.tool].map(encodeURIComponent).join("/");
   return {
-    id: `plugin:${key}${file === undefined ? "" : `:${encodeURIComponent(file)}`}`,
+    id: fileSurfaceId(choice, file),
     kind: "plugin-app",
     pluginId: choice.pluginId,
     server: view.server,
@@ -27,18 +33,23 @@ export function pluginAppSurface(choice: PluginViewChoice, file?: string): Plugi
 
 /**
  * The tab for a view an agent opened through its tool (`cad_open`): the view
- * reruns the call with the agent's arguments, one tab per path it names.
+ * reruns the call with the agent's arguments, one tab per path it names. A
+ * path inside the workspace (`file`, workspace-relative) shares the tab that
+ * opening the file from Files gives, so one model never gets two tabs.
  */
 export function agentViewSurface(
   choice: PluginViewChoice,
   args: Record<string, unknown>,
   path: string | null,
+  file: string | null = null,
 ): PluginAppSurface {
   const { view } = choice;
-  const key = [choice.pluginId, view.server, view.tool].map(encodeURIComponent).join("/");
-  const subject = path ?? JSON.stringify(args);
+  const id: PluginAppSurface["id"] =
+    file !== null
+      ? fileSurfaceId(choice, file)
+      : `plugin:${viewKey(choice)}:agent:${encodeURIComponent(path ?? JSON.stringify(args))}`;
   return {
-    id: `plugin:${key}:agent:${encodeURIComponent(subject)}`,
+    id,
     kind: "plugin-app",
     pluginId: choice.pluginId,
     server: view.server,

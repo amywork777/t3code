@@ -13,6 +13,7 @@ import {
   keyOf,
   parseCatalogKey,
   parseGitRemote,
+  parseSource,
   type PluginFolder,
   PluginReadError,
   readMarketplace,
@@ -182,7 +183,7 @@ describe("readMarketplace", () => {
                 source: "git-subdir",
                 url: "https://example.com/r.git",
                 path: "p/q",
-                sha: "abc",
+                sha: "abc1234",
               },
             },
             { name: "npm", source: { source: "npm", package: "x" } },
@@ -200,8 +201,31 @@ describe("readMarketplace", () => {
       url: "https://github.com/x/y.git",
       subdir: null,
     });
-    expect(market.plugins[3]!.source).toMatchObject({ type: "git", subdir: "p/q", sha: "abc" });
+    expect(market.plugins[3]!.source).toMatchObject({ type: "git", subdir: "p/q", sha: "abc1234" });
     expect(market.plugins[4]!.source.type).toBe("unsupported");
+  });
+
+  it("never passes a marketplace's url, ref or sha on to git as an option", () => {
+    const git = (fields: Record<string, string>) => parseSource({ source: "url", ...fields });
+    // The catalog entry from the review: run a shell command on Install.
+    expect(git({ url: ".", ref: "--upload-pack=sh -c 'touch pwned'" })).toBeNull();
+    expect(git({ url: "--upload-pack=x" })).toBeNull();
+    expect(git({ url: "https://example.com/r.git", ref: "--upload-pack=x" })).toMatchObject({
+      type: "unsupported",
+    });
+    expect(git({ url: "https://example.com/r.git", ref: "main:refs/x" })).toMatchObject({
+      type: "unsupported",
+    });
+    expect(git({ url: "https://example.com/r.git", sha: "-c core.pager=x" })).toMatchObject({
+      type: "unsupported",
+    });
+    expect(git({ url: "https://example.com/r.git", ref: "v1.2", sha: "ABCDEF0" })).toMatchObject({
+      type: "git",
+      ref: "v1.2",
+      sha: "ABCDEF0",
+    });
+    expect(parseSource({ source: "github", repo: "not a repo" })).toBeNull();
+    expect(parseSource({ source: "git-subdir", url: "-u", repo: "x/y", path: "p" })).toBeNull();
   });
 
   it("reads text-to-cad's layout: a Claude marketplace whose one plugin is the repository root", () => {
