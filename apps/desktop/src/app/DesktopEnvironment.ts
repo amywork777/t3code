@@ -93,7 +93,8 @@ export class DesktopEnvironment extends Context.Service<
   }
 >()("@t3tools/desktop/app/DesktopEnvironment") {}
 
-const APP_BASE_NAME = "T3 Code";
+// A fork names itself with VITE_APP_BASE_NAME, as its web build does (text-to-cad Studio).
+const APP_BASE_NAME = process.env.VITE_APP_BASE_NAME?.trim() || "T3 Code";
 
 function resolveDesktopAppStageLabel(input: {
   readonly isDevelopment: boolean;
