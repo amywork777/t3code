@@ -118,6 +118,7 @@ import * as Keybindings from "./keybindings.ts";
 import * as ExternalLauncher from "./process/externalLauncher.ts";
 import * as ThreadManagementService from "./orchestration-v2/ThreadManagementService.ts";
 import * as McpAppRequests from "./mcpApps/McpAppRequests.ts";
+import * as PluginService from "./plugins/PluginService.ts";
 import * as ProviderSessionManager from "./orchestration-v2/ProviderSessionManager.ts";
 import * as ThreadLaunchService from "./orchestration-v2/ThreadLaunchService.ts";
 import * as ThreadMessageIntake from "./orchestration-v2/ThreadMessageIntake.ts";
@@ -1224,6 +1225,7 @@ const layerWsRpc = (
 
       const providerSessionsV2 = yield* ProviderSessionManager.ProviderSessionManagerV2;
       const mcpAppRequests = yield* McpAppRequests.McpAppRequests;
+      const plugins = yield* PluginService.PluginService;
       const analytics = yield* AnalyticsService.AnalyticsService;
       // Client-origin attribution (#7774): every thread/turn the connecting
       // client starts is credited to its surface + app version. Best-effort:
@@ -2273,6 +2275,16 @@ const layerWsRpc = (
         [WS_METHODS.mcpAppsToolInfo]: (input) => mcpAppRequests.toolInfo(input),
         [WS_METHODS.mcpAppsUpdateModelContext]: (input) => mcpAppRequests.updateModelContext(input),
         [WS_METHODS.mcpAppsReadResource]: (input) => mcpAppRequests.readResource(input),
+        [WS_METHODS.pluginsCatalog]: (input) => plugins.catalog(input),
+        [WS_METHODS.pluginsList]: () => plugins.list,
+        [WS_METHODS.pluginsInstall]: (input) => plugins.install(input.key),
+        [WS_METHODS.pluginsSetEnabled]: (input) =>
+          plugins.setEnabled(input.pluginId, input.enabled),
+        [WS_METHODS.pluginsUninstall]: (input) =>
+          plugins.uninstall(input.pluginId).pipe(Effect.as({})),
+        [WS_METHODS.pluginsUpdate]: (input) => plugins.update(input.pluginId),
+        [WS_METHODS.pluginsOpenView]: (input) => plugins.openView(input),
+        [WS_METHODS.pluginsRequest]: (input) => plugins.request(input),
         [WS_METHODS.providerUploadFeedback]: (input) =>
           Effect.gen(function* () {
             const projection = yield* threadManagement.getThreadRecords(input.threadId, [

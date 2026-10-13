@@ -61,6 +61,8 @@ import * as ProviderInstanceRegistryHydration from "./provider/ProviderInstanceR
 import * as ProjectSettingsOverrideSweep from "./provider/ProjectSettingsOverrideSweep.ts";
 import * as TerminalManager from "./terminal/Manager.ts";
 import * as McpHttpServer from "./mcp/McpHttpServer.ts";
+import * as PluginService from "./plugins/PluginService.ts";
+import * as PluginStore from "./plugins/PluginStore.ts";
 import * as McpSessionRegistry from "./mcp/McpSessionRegistry.ts";
 import * as PreviewAutomationBroker from "./mcp/PreviewAutomationBroker.ts";
 import * as DeviceService from "./device/DeviceService.ts";
@@ -577,6 +579,8 @@ const layerRuntimeCoreDependenciesBase = Layer.mergeAll(
   // Subscribes to `account.rate-limits.updated` so usage bars track live
   // telemetry instead of waiting for the next status probe.
   ProviderUsageLimitsIngestion.layer,
+  // One plugin host for the WebSocket views and the agents' MCP tools.
+  PluginService.layer,
   layerProviderInstallationRefresh,
   ReplayMarkers.layer,
   // Catches overrides left behind by a project deleted before this cleanup
@@ -616,6 +620,8 @@ const layerRuntimeCoreDependenciesBase = Layer.mergeAll(
 );
 
 const layerRuntimeCoreDependencies = layerRuntimeCoreDependenciesBase.pipe(
+  // Installed plugins: provider adapters load their skills, routes and MCP serve their tools.
+  Layer.provideMerge(PluginStore.layer),
   Layer.provideMerge(layerPtyAdapter),
   // Search, prepare, status inspection, and turn launch share one registry
   // cache so every client and provider instance sees the same prepared agents.

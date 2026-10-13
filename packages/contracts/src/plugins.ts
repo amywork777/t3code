@@ -176,7 +176,8 @@ export const PluginOpenViewInput = Schema.Struct({
 export type PluginOpenViewInput = typeof PluginOpenViewInput.Type;
 
 export const PluginViewDocument = Schema.Struct({
-  html: Schema.String.check(Schema.isMaxLength(5 * 1024 * 1024)),
+  /** Apps inline their bundle: text-to-cad's CAD view is about 7 MB. */
+  html: Schema.String.check(Schema.isMaxLength(32 * 1024 * 1024)),
   /** `_meta.ui.csp` from the resource, passed through for the host to apply. */
   csp: Schema.NullOr(
     Schema.Struct({
