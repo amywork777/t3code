@@ -2,6 +2,7 @@
 # Rebase the fork onto upstream T3 Code (see FORK.md).
 #   main        = upstream/main + fork-only files (FORK.md, these scripts)
 #   amy/plugins = the plugin feature, rebased onto upstream/main
+#   amy/hardware = text-to-cad Studio, rebased onto amy/plugins
 # Stops at the first conflict and says where; nothing is pushed unless --push is given.
 set -euo pipefail
 
@@ -16,8 +17,9 @@ if ! git remote get-url upstream >/dev/null 2>&1; then
 fi
 git fetch upstream main
 
+# rebase_branch <branch> [<old base>] [<new base>]: with no bases, onto upstream/main.
 rebase_branch() {
-  local branch="$1" dir
+  local branch="$1" old_base="${2:-}" new_base="${3:-upstream/main}" dir
   dir="$(git worktree list --porcelain | awk -v b="refs/heads/$branch" '$1=="worktree"{w=$2} $1=="branch" && $2==b {print w}')"
   dir="${dir:-$root}"
   if [[ -n "$(git -C "$dir" status --porcelain)" ]]; then
@@ -28,17 +30,28 @@ rebase_branch() {
     git switch -q "$branch"
   fi
   echo "rebasing $branch in $dir"
-  if ! git -C "$dir" rebase upstream/main; then
+  local onto=("$new_base")
+  [[ -n "$old_base" ]] && onto=(--onto "$new_base" "$old_base")
+  if ! git -C "$dir" rebase "${onto[@]}"; then
     echo "conflict rebasing $branch in $dir; resolve, then: git -C $dir rebase --continue" >&2
     exit 1
   fi
-  echo "$branch is $(git -C "$dir" rev-list --count upstream/main.."$branch") commit(s) ahead of upstream"
+  echo "$branch is $(git -C "$dir" rev-list --count "$new_base".."$branch") commit(s) ahead of $new_base"
   if $push; then git -C "$dir" push --force-with-lease origin "$branch"; fi
 }
 
+has() { git show-ref --verify --quiet "refs/heads/$1"; }
+
 rebase_branch main
-if git show-ref --verify --quiet refs/heads/amy/plugins; then
+if has amy/plugins; then
+  old_plugins="$(git rev-parse amy/plugins)"
   rebase_branch amy/plugins
+  # Studio sits on the plugins branch, so it moves with it.
+  if has amy/hardware; then rebase_branch amy/hardware "$old_plugins" amy/plugins; fi
 fi
 
 "$root/scripts/fork-diff.sh" amy/plugins || true
+if has amy/hardware; then
+  "$root/scripts/fork-diff.sh" amy/hardware || true
+  echo "text-to-cad pins amy/hardware at apps/studio: once it is pushed, git -C apps/studio pull and commit apps/studio there."
+fi

@@ -43,11 +43,14 @@ Branches:
 - `main` = upstream `main` + this file and the scripts below.
 - `amy/plugins` = the plugin feature, rebased onto upstream `main`. It never contains fork-only
   files, so it can become an upstream PR if the maintainers approve the idea.
+- `amy/hardware` = text-to-cad Studio (its `STUDIO.md`), rebased onto `amy/plugins`. text-to-cad
+  pins it as its `apps/studio` submodule.
 
 Sync with upstream:
 
 ```sh
-scripts/sync-upstream.sh      # fetch upstream, rebase main and amy/plugins, report conflicts
+scripts/sync-upstream.sh          # fetch upstream, rebase main, amy/plugins and amy/hardware, report conflicts
+scripts/sync-upstream.sh --push   # the same, then force-push each branch to the fork
 ```
 
 ## Upstreaming
