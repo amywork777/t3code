@@ -5893,8 +5893,8 @@ export default function ChatView(props: ChatViewProps) {
     runningRunId: activeRunningTurnId,
     items: serverVisibleTurnItems,
     workspaceRoot: gitCwd,
-    followFiles:
-      clientSettingsHydrated && settings.proactivePanelsEnabled && !shouldUsePlanSidebarSheet,
+    // Unlike proactive diffs, this opens a view only when none of the plugin's is open.
+    followFiles: !shouldUsePlanSidebarSheet,
   });
   const closePreviewPanel = useCallback(() => {
     if (activeThreadRef) {
