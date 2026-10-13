@@ -403,6 +403,10 @@
       "types": "./src/state/plugins.ts",
       "default": "./src/state/plugins.ts"
     },
+    "./state/pluginFollow": {
+      "types": "./src/state/pluginFollow.ts",
+      "default": "./src/state/pluginFollow.ts"
+    },
     "./source-control-clients": {
       "types": "./src/sourceControlClients.ts",
       "default": "./src/sourceControlClients.ts"
