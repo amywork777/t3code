@@ -43,11 +43,11 @@ Everything else is upstream T3 Code plus the fork's plugins (`FORK.md` on `main`
 ## Updating
 
 One command takes in a new T3 Code: from the fork's `main` checkout,
-`scripts/sync-upstream.sh --push` rebases `main` onto upstream, `amy/plugins` onto that, and
+`scripts/sync-upstream.sh --push` rebases `main` and `amy/plugins` onto upstream, and
 `amy/hardware` onto `amy/plugins`, stopping at the first conflict. Then bump text-to-cad's pin:
 `git -C apps/studio pull` and commit `apps/studio`.
 
 Rebases stay clean because the branch adds files rather than editing T3's: an edit to an upstream
-file is a seam of a line or a few (`scripts/fork-diff.sh amy/hardware` lists them). Keep it that
+file is a seam of a line or a few (`scripts/fork-diff.sh amy/hardware` on `main` lists them). Keep it that
 way: new behaviour goes in new files, and a T3 string or style is changed through `brand/`, not
 in place.
