@@ -36,6 +36,7 @@ import { PluginViewFrame } from "./PluginViewFrame";
 /** Catalog rows rendered before "Show all"; search narrows the rest. */
 const INITIAL_CATALOG_ROWS = 60;
 const SEARCH_DEBOUNCE_MS = 250;
+const CATALOG_POLL_MS = 2_000;
 
 const COMPATIBILITY_BADGE = {
   works: "success",
@@ -135,6 +136,15 @@ function PluginsSettings({ environmentId }: { environmentId: EnvironmentId }) {
   const failedCatalogs = catalogs.filter((entry) => entry.state === "error");
   const fetchingCatalogs = catalogs.some((entry) => entry.state === "fetching");
   const refreshing = pending["catalog:refresh"] !== undefined;
+  // The server never waits on the network for a catalog read; while a catalog is
+  // still downloading, read again until it lands.
+  const refreshCatalogQuery = catalog.refresh;
+  useEffect(() => {
+    if (!fetchingCatalogs) return;
+    const timer = setTimeout(() => refreshCatalogQuery(), CATALOG_POLL_MS);
+    return () => clearTimeout(timer);
+    // oxlint-disable-next-line react/exhaustive-effect-dependencies -- Each read schedules the next while fetching.
+  }, [fetchingCatalogs, catalog.data, refreshCatalogQuery]);
   const visibleEntries =
     entries === null || showAll ? entries : entries.slice(0, INITIAL_CATALOG_ROWS);
   const globalViews = useMemo(() => pluginViewsWithEntrypoint(plugins, "global"), [plugins]);
@@ -369,6 +379,8 @@ function PluginsSettings({ environmentId }: { environmentId: EnvironmentId }) {
           <SettingsRow title="Could not load the catalog" description={catalog.error} />
         ) : visibleEntries === null ? (
           <SettingsRow title="Loading plugins…" />
+        ) : visibleEntries.length === 0 && fetchingCatalogs ? (
+          <SettingsRow title="Fetching plugin catalogs…" />
         ) : visibleEntries.length === 0 ? (
           <SettingsRow
             title={submittedQuery ? `No plugins match "${submittedQuery}"` : "No plugins found"}
