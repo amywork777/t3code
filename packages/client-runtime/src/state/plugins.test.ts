@@ -69,6 +69,18 @@ describe("plugin view matching", () => {
     expect(pluginFileHandlers(plugins, "a/step")).toEqual([]);
   });
 
+  it("matches a compound extension by the name's whole ending", () => {
+    // text-to-cad's WireViz harnesses: `.harness.yml`, not every `.yml`.
+    const cad = view({
+      entrypoints: [{ type: "file", extensions: [".kicad_pcb", ".harness.yml"] }],
+    });
+    const plugins = [plugin({ views: [cad] })];
+    expect(pluginFileHandlers(plugins, "hat/hat.kicad_pcb")).toHaveLength(1);
+    expect(pluginFileHandlers(plugins, "loom/main.Harness.YML")).toHaveLength(1);
+    expect(pluginFileHandlers(plugins, "ci/workflow.yml")).toEqual([]);
+    expect(pluginFileHandlers(plugins, "loom/.harness.yml")).toEqual([]);
+  });
+
   it("leaves out disabled plugins and other entrypoints", () => {
     const fileView = view({ entrypoints: [{ type: "file", extensions: ["step"] }] });
     const threadView = view({ tool: "workbench", entrypoints: [{ type: "thread" }] });

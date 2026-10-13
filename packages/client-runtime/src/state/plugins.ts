@@ -107,9 +107,12 @@ export interface PluginViewChoice {
   readonly view: PluginView;
 }
 
+const fileName = (path: string) =>
+  path.slice(Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\")) + 1);
+
 /** The extension of a path, lowercased and without its dot; empty when it has none. */
 export function pluginFileExtension(path: string): string {
-  const name = path.slice(Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\")) + 1);
+  const name = fileName(path);
   const dot = name.lastIndexOf(".");
   return dot <= 0 ? "" : name.slice(dot + 1).toLowerCase();
 }
@@ -130,18 +133,21 @@ export function pluginViewsWithEntrypoint(
   );
 }
 
-/** The views of enabled plugins that claim this file's extension, in install order. */
+/**
+ * The views of enabled plugins that claim this file's extension, in install order.
+ * A claim matches the whole end of the name, so a compound one (`.harness.yml`)
+ * claims only its own files, not every `.yml`.
+ */
 export function pluginFileHandlers(
   plugins: ReadonlyArray<InstalledPlugin>,
   path: string,
 ): PluginViewChoice[] {
-  const extension = pluginFileExtension(path);
-  if (extension === "") return [];
+  const name = fileName(path).toLowerCase();
+  const claims = (claimed: string) => {
+    const ending = `.${normalizeExtension(claimed)}`;
+    return ending.length > 1 && name.length > ending.length && name.endsWith(ending);
+  };
   return pluginViewsWithEntrypoint(plugins, "file").filter(({ view }) =>
-    view.entrypoints.some(
-      (entry) =>
-        entry.type === "file" &&
-        entry.extensions.some((claimed) => normalizeExtension(claimed) === extension),
-    ),
+    view.entrypoints.some((entry) => entry.type === "file" && entry.extensions.some(claims)),
   );
 }
