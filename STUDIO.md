@@ -24,9 +24,9 @@ Everything else is upstream T3 Code plus the fork's plugins (`FORK.md` on `main`
 
 - **Views the agent opens.** When the agent calls a plugin view's tool (`cad_open`), the view
   opens as a tab beside the thread with the call's arguments.
-- **Follow the files.** When a run writes a file a view claims (a `.step` from an edit, or one a
-  shell command built, seen in the turn's checkpoint) and no view of that plugin is open, the file
-  opens in one. Open views refresh themselves, and a panel choice made during the run wins.
+- **Follow the files.** When a run's file edit writes a file a view claims (a `.step`) and no view
+  of that plugin is open, the file opens in one. Models a shell command builds arrive through the
+  agent's own `cad_open` or `cad_show`. Open views refresh themselves, and a panel choice made during the run wins.
 - **Bundled plugins.** `T3CODE_PLUGIN_MARKETPLACE` and `T3CODE_DEFAULT_PLUGINS`
   (`apps/server/src/plugins/BundledPlugins.ts`); a plugin the user uninstalls stays uninstalled.
 - **Starter prompts.** A new thread offers what the enabled plugins suggest asking first

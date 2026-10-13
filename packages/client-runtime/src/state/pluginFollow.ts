@@ -10,8 +10,8 @@ import { type PluginViewChoice, pluginFileHandlers } from "./plugins.ts";
  * A plugin view a settled turn item asks to show beside its thread:
  * - `agent`: the agent called a view's tool itself (text-to-cad's `cad_open`),
  *   so the view opens with the call's arguments, as Codex opens its tab.
- * - `file`: the item wrote a file an enabled view claims (a `.step`), so the
- *   view follows the agent's work.
+ * - `file`: a file edit wrote a file an enabled view claims (a `.step`), so
+ *   the view follows the agent's work.
  */
 export type PluginFollowTarget =
   | {
@@ -59,17 +59,17 @@ export function agentOpenedView(
   return null;
 }
 
-/** The files an item wrote, in the order it reports them; deletions are left out. */
+/**
+ * The files a file edit wrote, deletions left out. Checkpoints are not read:
+ * their paths are relative to the repository, not the workspace, and they
+ * report every file as modified, deletions included. A model a shell command
+ * builds reaches the view through the agent's own `cad_open` or `cad_show`.
+ */
 function writtenPaths(item: OrchestrationV2TurnItem): ReadonlyArray<string> {
-  if (item.type === "file_change") {
-    const changes = item.changes ?? [];
-    if (changes.length === 0) return [item.fileName];
-    return changes.filter((change) => !/^del/i.test(change.operation)).map((change) => change.path);
-  }
-  if (item.type === "checkpoint") {
-    return item.files.filter((file) => !/^del/i.test(file.kind)).map((file) => file.path);
-  }
-  return [];
+  if (item.type !== "file_change") return [];
+  const changes = item.changes ?? [];
+  if (changes.length === 0) return [item.fileName];
+  return changes.filter((change) => !/^del/i.test(change.operation)).map((change) => change.path);
 }
 
 /** What a settled item asks to show, or null. The last claimed file wins. */

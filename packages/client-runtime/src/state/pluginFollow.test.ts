@@ -93,18 +93,15 @@ describe("pluginFollowTarget", () => {
     expect(target?.choice.view.tool).toBe("cad_file");
   });
 
-  it("follows files a turn's checkpoint changed, so shell-built models count", () => {
+  it("ignores checkpoints, whose paths are the repository's, not the workspace's", () => {
     const target = pluginFollowTarget(
       [plugin()],
       item({
         type: "checkpoint",
-        files: [
-          { path: "model.py", kind: "modified", additions: 3, deletions: 1 },
-          { path: "model.step", kind: "added", additions: 900, deletions: 0 },
-        ],
+        files: [{ path: "packages/cad/model.step", kind: "modified", additions: 9, deletions: 0 }],
       }),
     );
-    expect(target).toMatchObject({ kind: "file", path: "model.step" });
+    expect(target).toBeNull();
   });
 
   it("skips deletions, unfinished items and files no view claims", () => {

@@ -71,7 +71,10 @@ describe("bundled plugins", () => {
     it.effect("installs a checkout's plugin once, and an uninstall sticks", () => {
       const { dir, repo } = checkout();
       const base = NodePath.join(dir, "home");
-      const env = { T3CODE_PLUGIN_MARKETPLACE: repo, T3CODE_DEFAULT_PLUGINS: "text-to-cad" };
+      const env = {
+        T3CODE_PLUGIN_MARKETPLACE: repo,
+        T3CODE_DEFAULT_PLUGINS: "text-to-cad, missing",
+      };
       const listIds = Effect.gen(function* () {
         const plugins = yield* PluginService.PluginService;
         return (yield* plugins.list).plugins.map((plugin) => [plugin.id, plugin.enabled]);
@@ -85,6 +88,20 @@ describe("bundled plugins", () => {
         yield* Effect.gen(function* () {
           yield* BundledPlugins.offerDefaults;
           assert.deepEqual(yield* listIds, [["text-to-cad", true]]);
+          // A plugin that failed to install is not recorded, so the next start tries again.
+          assert.deepEqual(
+            JSON.parse(
+              NodeFS.readFileSync(
+                NodePath.join(
+                  (yield* ServerConfig.ServerConfig).stateDir,
+                  "plugins",
+                  "offered.json",
+                ),
+                "utf8",
+              ),
+            ),
+            ["local-text-to-cad/text-to-cad"],
+          );
           const plugins = yield* PluginService.PluginService;
           yield* plugins.uninstall("text-to-cad");
         }).pipe(Effect.provide(layerFor(env, base)));
