@@ -318,6 +318,13 @@ export function pullRequestSurface(target: {
   };
 }
 
+// A plugin view reopened with new arguments (the agent's next `cad_open`) reruns with them.
+const sameSurfaceUpdated = (entry: RightPanelSurface, surface: RightPanelSurface) =>
+  entry.id === surface.id &&
+  entry.kind === "plugin-app" &&
+  surface.kind === "plugin-app" &&
+  JSON.stringify(entry.arguments) !== JSON.stringify(surface.arguments);
+
 const upsertSurface = (
   current: ThreadRightPanelState,
   surface: RightPanelSurface,
@@ -326,7 +333,7 @@ const upsertSurface = (
   ...current,
   isOpen: true,
   surfaces: current.surfaces.some((entry) => entry.id === surface.id)
-    ? current.surfaces
+    ? current.surfaces.map((entry) => (sameSurfaceUpdated(entry, surface) ? surface : entry))
     : [...current.surfaces, surface],
   activeSurfaceId: activate ? surface.id : current.activeSurfaceId,
 });

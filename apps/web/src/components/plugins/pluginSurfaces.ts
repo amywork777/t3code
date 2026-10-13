@@ -27,7 +27,8 @@ export function pluginAppSurface(choice: PluginViewChoice, file?: string): Plugi
 
 /**
  * The tab for a view an agent opened through its tool (`cad_open`): the view
- * reruns the call with the agent's arguments, one tab per path it names.
+ * reruns the call with the agent's latest arguments, one tab per path it names
+ * and one for calls that name none.
  */
 export function agentViewSurface(
   choice: PluginViewChoice,
@@ -36,9 +37,8 @@ export function agentViewSurface(
 ): PluginAppSurface {
   const { view } = choice;
   const key = [choice.pluginId, view.server, view.tool].map(encodeURIComponent).join("/");
-  const subject = path ?? JSON.stringify(args);
   return {
-    id: `plugin:${key}:agent:${encodeURIComponent(subject)}`,
+    id: `plugin:${key}:agent${path === null ? "" : `:${encodeURIComponent(path)}`}`,
     kind: "plugin-app",
     pluginId: choice.pluginId,
     server: view.server,

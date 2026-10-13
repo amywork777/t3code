@@ -6,6 +6,7 @@ import { useClosedViewStore } from "./closedViewStore";
 import {
   migratePersistedRightPanelState,
   pullRequestSurface,
+  type PluginAppSurface,
   pullRequestSurfaceId,
   selectActiveRightPanel,
   selectActiveRightPanelSurface,
@@ -1238,5 +1239,33 @@ describe("rightPanelStore", () => {
     expect(surfaceIds()).toEqual(["browser:tab-a", "terminal:term-1", "diff", "browser:tab-b"]);
     // Reordering is not a choice about what the panel shows.
     expect(store.getUserActionRevision(refA)).toBe(revision);
+  });
+});
+
+describe("agent-opened plugin views", () => {
+  const cadView = (args: Record<string, unknown>): PluginAppSurface => ({
+    id: "plugin:text-to-cad/cad/cad_open:agent:part.step",
+    kind: "plugin-app",
+    pluginId: "text-to-cad",
+    server: "cad",
+    tool: "cad_open",
+    title: "part.step",
+    resourceUri: "ui://cad/app",
+    arguments: args,
+  });
+
+  it("reruns the open tab with the agent's latest arguments", () => {
+    const store = useRightPanelStore.getState();
+    const revision = store.getUserActionRevision(refA);
+    store.openProactive(refA, cadView({ path: "part.step", view: "iso" }), revision);
+    store.openProactive(refA, cadView({ path: "part.step", view: "top" }), revision);
+
+    const { surfaces } = selectThreadRightPanelState(
+      useRightPanelStore.getState().byThreadKey,
+      refA,
+    );
+    const plugin = surfaces.filter((surface) => surface.kind === "plugin-app");
+    expect(plugin).toHaveLength(1);
+    expect(plugin[0]).toMatchObject({ arguments: { path: "part.step", view: "top" } });
   });
 });
