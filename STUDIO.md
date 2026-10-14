@@ -1,13 +1,13 @@
 # text-to-cad Studio
 
 T3 Code made into a hardware app: agents design parts with the text-to-cad plugin, and the CAD
-view follows their work beside the thread. It is this fork's `amy/hardware` branch, exported into
-[text-to-cad](https://github.com/earthtojake/text-to-cad) as `apps/studio` with only the parts the
-desktop and web app need.
+view follows their work beside the thread. It is this fork's `amy/hardware` branch, pinned inside
+[text-to-cad](https://github.com/earthtojake/text-to-cad) as the `apps/studio` submodule.
 
 ## Run it
 
-From `apps/studio` in a text-to-cad checkout, after `vp i`:
+In a text-to-cad checkout, `git submodule update --init apps/studio`, then from `apps/studio`,
+after `vp i`:
 
 ```sh
 vpr studio            # server and web
@@ -44,18 +44,17 @@ Everything else is upstream T3 Code plus the fork's plugins (`FORK.md` on `main`
 
 One command takes in a new T3 Code: from the fork's `main` checkout,
 `scripts/sync-upstream.sh --push` rebases `main` and `amy/plugins` onto upstream, and
-`amy/hardware` onto `amy/plugins`, stopping at the first conflict. Then write Studio into
-text-to-cad:
+`amy/hardware` onto `amy/plugins`, stopping at the first conflict. Then bump text-to-cad's pin
+and tag the commit it pins, so it stays fetchable after the next rebase moves the branch:
 
 ```sh
-node scripts/export-studio.ts <text-to-cad>/apps/studio
+git submodule update --remote apps/studio     # in text-to-cad: the pin follows amy/hardware
+pin=studio/pin/$(git -C apps/studio rev-parse --short=10 HEAD)
+git -C apps/studio tag "$pin" && git -C apps/studio push origin "$pin"
 ```
 
-It carries only what the server, web and desktop apps need to run, build, lint and test (its
-`KEEP` list): the mobile app, marketing site, relay, docs, release tooling and repository chrome
-stay here. The copy installs no git hooks, since text-to-cad owns its own, and gets a lockfile
-for exactly what it carries. Commit it in text-to-cad with the hash the script prints. Change
-Studio here, never in text-to-cad's copy: the next export replaces it.
+and commit `apps/studio`. What Studio changes against T3 Code is the compare view from the
+upstream commit the branch sits on to `amy/hardware`.
 
 Rebases stay clean because the branch adds files rather than editing T3's: an edit to an upstream
 file is a seam of a line or a few (`scripts/fork-diff.sh amy/hardware` on `main` lists them). Keep it that
