@@ -3,7 +3,9 @@
 Studio's identity, read through `T3CODE_BRAND_DIR` (`scripts/studio.ts` sets it; `apps/web/vite/brand.ts`
 applies it):
 
-- `brand.json`: the app's name and the loading splash's colors.
+- `brand.json`: the app's name and the loading splash's colors; `layout: "workbench"`, which makes the
+  viewer the main surface with the chat docked beside it; and `starters`, a new thread's hardware jobs,
+  each with the plugin skill it needs (`skill`), so it is offered only while an enabled plugin has it.
 - `theme.css`: text-to-cad's look on T3 Code's color roles: the CAD viewer's neutral surfaces, charcoal in
   dark, blue only for brand emphasis and primary actions. It is scoped to T3's default look, so a theme the
   user picks keeps its own colors.

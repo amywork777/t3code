@@ -4,5 +4,14 @@
     "lightAccent": "#2c7197",
     "darkAccent": "#62b7ec",
     "darkBackground": "#2b2b2b"
-  }
+  },
+  "layout": "workbench",
+  "starters": [
+    { "prompt": "Check this bracket under load", "skill": "fea" },
+    { "prompt": "Route this board", "skill": "pcb" },
+    { "prompt": "Post G-code for grbl", "skill": "cam" },
+    { "prompt": "Check this part for CNC machining", "skill": "dfm" },
+    { "prompt": "Slice this part for FDM printing", "skill": "gcode" },
+    { "prompt": "Design a 50 mm aluminum L-bracket with two M5 holes", "skill": "cad" }
+  ]
 }

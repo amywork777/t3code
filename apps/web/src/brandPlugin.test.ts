@@ -38,6 +38,14 @@ describe("brand plugin", () => {
     expect(html).toContain("--primary: #2c7197;");
   });
 
+  it("lays Studio out as a workbench and gives it hardware starters", () => {
+    const brand = readBrand(studioBrand)!;
+    expect(brand.layout).toBe("workbench");
+    expect(brand.starters.map((starter) => starter.prompt)).toContain("Route this board");
+    // Every starter names the text-to-cad skill it needs, so none is offered without it.
+    expect(brand.starters.every((starter) => starter.skill !== null)).toBe(true);
+  });
+
   it("says which folder lacks brand.json", () => {
     expect(() => readBrand(import.meta.dirname)).toThrow(/has no brand\.json/);
   });

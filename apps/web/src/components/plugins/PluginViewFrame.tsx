@@ -24,6 +24,7 @@ import { pluginEnvironment } from "~/state/plugins";
 import { useAtomCommand } from "~/state/use-atom-command";
 import { Button } from "../ui/button";
 import { Spinner } from "../ui/spinner";
+import { reportPluginViewCall } from "./pluginViewCalls";
 import {
   PLUGIN_VIEW_SRCDOC_SANDBOX,
   PLUGIN_VIEW_STAGED_SANDBOX,
@@ -257,11 +258,23 @@ export function PluginViewFrame(props: {
       hostContext,
       // The user opened this view of a plugin they installed, so its calls to
       // its own server run without a prompt each.
-      callTool: async (input) =>
-        (await call("tools/call", {
+      callTool: async (input) => {
+        const result = (await call("tools/call", {
           name: input.name,
           arguments: input.arguments,
-        })) as McpAppCallToolResult,
+        })) as McpAppCallToolResult;
+        const { target: current } = latest.current.props;
+        reportPluginViewCall({
+          environmentId: current.environmentId,
+          threadId: current.threadId,
+          pluginId: current.pluginId,
+          server: current.server,
+          name: input.name,
+          arguments: input.arguments,
+          result,
+        });
+        return result;
+      },
       readResource: ({ uri }) => call("resources/read", { uri }),
       openLink: async (url) => {
         if (document.activeElement !== frameRef.current || !navigator.userActivation?.isActive) {

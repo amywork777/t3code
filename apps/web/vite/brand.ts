@@ -25,7 +25,26 @@ export interface Brand {
   readonly markUrl: string | null;
   /** `splash.svg`: the loading splash's logo, as a data URL (it may animate). */
   readonly splashLogoUrl: string | null;
+  /** `"workbench"`: the right panel is the main surface and the chat docks beside it. */
+  readonly layout: "workbench" | null;
+  /** A new thread's starters, in place of the plugins' own (`components/plugins/brandStarters.ts`). */
+  readonly starters: ReadonlyArray<BrandStarter>;
 }
+
+/** A starter and the plugin skill it needs; one whose skill no enabled plugin has is not offered. */
+export interface BrandStarter {
+  readonly prompt: string;
+  readonly skill: string | null;
+}
+
+const readStarters = (value: unknown): BrandStarter[] =>
+  Array.isArray(value)
+    ? value.flatMap((entry) => {
+        const record = (entry ?? {}) as Record<string, unknown>;
+        const prompt = text(record.prompt);
+        return prompt === null ? [] : [{ prompt, skill: text(record.skill) }];
+      })
+    : [];
 
 /** Icons a brand may replace, by the path the page asks for them at. */
 const ICONS: Record<string, string> = {
@@ -66,6 +85,8 @@ export function readBrand(dir: string | undefined): Brand | null {
     markUrl: mark === null ? null : `data:image/svg+xml;base64,${mark.toString("base64")}`,
     splashLogoUrl:
       splashLogo === null ? null : `data:image/svg+xml;base64,${splashLogo.toString("base64")}`,
+    layout: raw.layout === "workbench" ? "workbench" : null,
+    starters: readStarters(raw.starters),
   };
 }
 
@@ -107,7 +128,11 @@ export function brandPlugin(dir = process.env.T3CODE_BRAND_DIR?.trim()): Plugin 
   return {
     name: "t3code:brand",
     config: () => ({
-      define: { "import.meta.env.VITE_APP_MARK_URL": JSON.stringify(brand.markUrl ?? "") },
+      define: {
+        "import.meta.env.VITE_APP_MARK_URL": JSON.stringify(brand.markUrl ?? ""),
+        "import.meta.env.VITE_APP_LAYOUT": JSON.stringify(brand.layout ?? ""),
+        "import.meta.env.VITE_APP_STARTERS": JSON.stringify(JSON.stringify(brand.starters)),
+      },
     }),
     // Ahead of Vite's own static files, so the brand's icons win over public/.
     configureServer(server) {

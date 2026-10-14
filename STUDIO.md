@@ -30,7 +30,22 @@ Everything else is upstream T3 Code plus the fork's plugins (`FORK.md` on `main`
   agent's own `cad_open` or `cad_show`. Open views refresh themselves, and a panel choice made during the run wins.
 - **Bundled plugins.** `T3CODE_PLUGIN_MARKETPLACE` and `T3CODE_DEFAULT_PLUGINS`
   (`apps/server/src/plugins/BundledPlugins.ts`); a plugin the user uninstalls stays uninstalled.
-- **Starter prompts.** A new thread offers what the enabled plugins suggest asking first
+- **A workbench, not a chat with a CAD tab.** `brand.json` `"layout": "workbench"` makes the right
+  panel the main surface: the model or board viewer takes the window and the chat docks beside it
+  at a width the user drags, one width for every thread, while the viewer absorbs a wider window
+  (`apps/web/src/components/workbench`). A thread opens on its viewer the first time it shows, so
+  the agent's `cad_show` has one to switch; one the user closes stays closed. With the room, the
+  viewer's own findings show where it puts them: the verdict at the top of an FEA study, the
+  findings in a CAM job, a board's checks. Studio lists none of its own.
+- **The part stays in view.** Above the composer, what the viewer shows: its name, what it is
+  (part, assembly, board, FEA study, CAM job), its units, its material and its last build. The
+  viewer's own sync (`cad_sync`, relayed by the frame) says which model and its build; the
+  viewer's routes, through `cad_http` once per revision, say the rest. Studio makes no call the
+  plugin would count, and a fact the server does not hold is left out or said to be missing. A
+  press brings the viewer back.
+- **Hardware starters.** A new thread offers hardware jobs from `brand.json` `starters` ("Route
+  this board", "Post G-code for grbl"), each only while an enabled plugin has the skill it needs
+  (`pcb`, `cam`). Without brand starters, it offers what the enabled plugins suggest
   (`interface.defaultPrompt`).
 - **text-to-cad's look.** It's named Studio and wears text-to-cad's brand kit, not T3's: the CAD
   viewer's neutral palette (charcoal in dark), its animated mark on the loading splash, its mark

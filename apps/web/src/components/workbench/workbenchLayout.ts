@@ -1,0 +1,27 @@
+/**
+ * The workbench layout (`brand.json` `"layout": "workbench"`, text-to-cad
+ * Studio): the right panel is the main surface, where the model or board
+ * viewer lives, and the chat docks beside it at a width the user sets. The
+ * viewer absorbs a wider window; the dock keeps its width. T3 Code's own
+ * layout, a chat column with a side panel, is unchanged without the brand.
+ */
+export const WORKBENCH_LAYOUT = import.meta.env.VITE_APP_LAYOUT === "workbench";
+
+export const CHAT_DOCK_WIDTH_STORAGE_KEY = "studio:chat-dock-width";
+export const CHAT_DOCK_DEFAULT_WIDTH = 400;
+/** The composer overflows below this, the floor T3 keeps beside its panel. */
+export const CHAT_DOCK_MIN_WIDTH = 360;
+/** The viewer's own floor; below both floors the dock yields, as T3's chat column does. */
+export const WORKBENCH_MIN_WIDTH = 360;
+
+/** The dock's width in a row this wide, between its floor and what leaves the viewer its floor. */
+export function chatDockWidth(rowWidth: number, dockWidth: number): number {
+  const wanted = Number.isFinite(dockWidth) ? dockWidth : CHAT_DOCK_DEFAULT_WIDTH;
+  const max = Math.max(CHAT_DOCK_MIN_WIDTH, rowWidth - WORKBENCH_MIN_WIDTH);
+  return Math.round(Math.min(max, Math.max(CHAT_DOCK_MIN_WIDTH, wanted)));
+}
+
+/** The viewer's width: the row less the dock, never under its floor. */
+export function workbenchPanelWidth(rowWidth: number, dockWidth: number): number {
+  return Math.max(WORKBENCH_MIN_WIDTH, Math.floor(rowWidth) - chatDockWidth(rowWidth, dockWidth));
+}

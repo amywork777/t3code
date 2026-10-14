@@ -36,6 +36,7 @@ import {
   Plus,
   TerminalSquare,
   Puzzle,
+  Box,
 } from "lucide-react";
 import { Volume2, VolumeOff } from "lucide";
 import {
@@ -95,6 +96,7 @@ import { PierreEntryIcon } from "./chat/PierreEntryIcon";
 import { resolvePullRequestState } from "./pullRequest/pullRequestPresentation";
 import { PullRequestGlyph } from "~/components/pullRequest/pullRequestIcons";
 import { observeResize } from "~/lib/observeResize";
+import { WORKBENCH_LAYOUT } from "./workbench/workbenchLayout";
 
 interface RightPanelTabsProps {
   mode: PreviewPanelMode;
@@ -715,7 +717,12 @@ function SurfaceIcon({
         <Smartphone className="size-3 shrink-0" />
       );
     case "plugin-app":
-      return <Puzzle className="size-3 shrink-0" />;
+      // In the workbench (Studio) a plugin view is the model or board viewer.
+      return WORKBENCH_LAYOUT ? (
+        <Box className="size-3 shrink-0" />
+      ) : (
+        <Puzzle className="size-3 shrink-0" />
+      );
   }
 }
 

@@ -244,7 +244,6 @@ import { subscribeSnapShotComposerFocus } from "../lib/desktopSnapShot";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { useTurnDiffSummaries } from "../hooks/useTurnDiffSummaries";
 import { FileMetadataThreadProvider } from "../hooks/FileMetadataThreadProvider";
-import { usePreviewPanelInlineSize } from "../hooks/usePreviewPanelInlineSize";
 import {
   RIGHT_PANEL_INLINE_LAYOUT_MEDIA_QUERY,
   type ThreadPanelPresentation,
@@ -615,6 +614,10 @@ import { observeResize } from "~/lib/observeResize";
 import { PluginThreadViewMenuItems } from "./plugins/PluginThreadViewMenuItems";
 import { PluginStarterPrompts } from "./plugins/PluginStarterPrompts";
 import { usePluginFollow } from "./plugins/usePluginFollow";
+import { PartContextStrip } from "./workbench/PartContextStrip";
+import { useChatPanelInlineSize } from "./workbench/useWorkbenchPanelSize";
+import { useWorkbenchViewer } from "./workbench/useWorkbenchViewer";
+import { WORKBENCH_LAYOUT } from "./workbench/workbenchLayout";
 
 const EMPTY_PROVIDERS: ServerProvider[] = [];
 const EMPTY_PROVIDER_MODELS: ServerProvider["models"] = [];
@@ -2256,7 +2259,8 @@ export default function ChatView(props: ChatViewProps) {
   );
   // Electron hosts its own browser tabs; other clients need the environment to host them.
   const browserAvailable = isPreviewSupportedInRuntime() || activeEnvironmentServerBrowser;
-  const previewPanelInlineSize = usePreviewPanelInlineSize(undefined, {
+  // A workbench brand (text-to-cad Studio) makes the panel the main surface and docks the chat.
+  const previewPanelInlineSize = useChatPanelInlineSize(undefined, {
     container: workspaceLayoutElement,
     widthStorageKey: `t3code:preview-panel-width:${activeThreadKey}`,
   });
@@ -5895,6 +5899,11 @@ export default function ChatView(props: ChatViewProps) {
     workspaceRoot: gitCwd,
     // Unlike proactive diffs, this opens a view only when none of the plugin's is open.
     followFiles: !shouldUsePlanSidebarSheet,
+  });
+  useWorkbenchViewer({
+    enabled: WORKBENCH_LAYOUT,
+    environmentId,
+    threadRef: isServerThread ? activeThreadRef : null,
   });
   const closePreviewPanel = useCallback(() => {
     if (activeThreadRef) {
@@ -11727,7 +11736,9 @@ export default function ChatView(props: ChatViewProps) {
                         />
                       </div>
                     </div>
-                  ) : null}
+                  ) : (
+                    <PartContextStrip threadRef={isServerThread ? activeThreadRef : null} />
+                  )}
                   <div
                     ref={draftHeroTransition.composerAnchorRef}
                     className="relative z-10"
