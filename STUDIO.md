@@ -1,13 +1,13 @@
 # text-to-cad Studio
 
 T3 Code made into a hardware app: agents design parts with the text-to-cad plugin, and the CAD
-view follows their work beside the thread. It is this fork's `amy/hardware` branch, pinned inside
-[text-to-cad](https://github.com/earthtojake/text-to-cad) as the `apps/studio` submodule.
+view follows their work beside the thread. It is this fork's `amy/hardware` branch, copied into
+[text-to-cad](https://github.com/earthtojake/text-to-cad) as `apps/studio` (all of it but `.repos/`,
+T3's vendored Effect and Alchemy references for agents).
 
 ## Run it
 
-In a text-to-cad checkout, `git submodule update --init apps/studio`, then from `apps/studio`,
-after `vp i`:
+From `apps/studio` in a text-to-cad checkout, after `vp i`:
 
 ```sh
 vpr studio            # server and web
@@ -44,8 +44,18 @@ Everything else is upstream T3 Code plus the fork's plugins (`FORK.md` on `main`
 
 One command takes in a new T3 Code: from the fork's `main` checkout,
 `scripts/sync-upstream.sh --push` rebases `main` and `amy/plugins` onto upstream, and
-`amy/hardware` onto `amy/plugins`, stopping at the first conflict. Then bump text-to-cad's pin:
-`git -C apps/studio pull` and commit `apps/studio`.
+`amy/hardware` onto `amy/plugins`, stopping at the first conflict. Then copy the branch into
+text-to-cad, from its root:
+
+```sh
+rm -rf apps/studio && mkdir apps/studio
+git -C <this checkout> archive amy/hardware -- . ':(exclude).repos' | tar -x -C apps/studio
+git add -A -f apps/studio
+```
+
+(`-f` because text-to-cad's `.gitignore` covers T3's `.agents/` and `.vscode/`; the fresh copy holds
+no build output), and commit with the copied commit's hash in the message. Change Studio here, never in
+text-to-cad's copy: the next copy replaces it whole.
 
 Rebases stay clean because the branch adds files rather than editing T3's: an edit to an upstream
 file is a seam of a line or a few (`scripts/fork-diff.sh amy/hardware` on `main` lists them). Keep it that
