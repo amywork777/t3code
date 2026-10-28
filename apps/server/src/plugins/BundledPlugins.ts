@@ -1,5 +1,5 @@
 /**
- * Plugins an app built on T3 Code ships with. text-to-cad Studio runs this
+ * Plugins an app built on T3 Code ships with. `scripts/text-to-cad.ts` runs this
  * server from inside a text-to-cad checkout and sets:
  *
  * - `T3CODE_PLUGIN_MARKETPLACE`: a marketplace folder read in place, beside the
