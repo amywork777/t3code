@@ -119,13 +119,13 @@ describe("readPlugin", () => {
       memoryFolder({
         "plugin.json": { name: "text-to-cad" },
         "mcp.json": {
-          mcpServers: { cad: { type: "stdio", command: "uvx", args: ["cadgen", "mcp"] } },
+          mcpServers: { cad: { type: "stdio", command: "uvx", args: ["--from", "cad-mcp", "cad-mcp"] } },
         },
       }),
     );
     expect(read.format).toBe("bare");
     expect(read.servers.cad!.command).toBe("uvx");
-    expect(read.servers.cad!.args).toEqual(["cadgen", "mcp"]);
+    expect(read.servers.cad!.args).toEqual(["--from", "cad-mcp", "cad-mcp"]);
   });
 
   it("uses a marketplace entry's inline manifest only when the folder has none", () => {

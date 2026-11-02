@@ -17,6 +17,12 @@ vpr text-to-cad:desktop    # the Electron app
 plugin on at first start, and keeps state in `~/.t3code-text-to-cad` (never in T3 Code's `~/.t3`).
 `TEXT_TO_CAD_ROOT` points at another checkout; `T3CODE_TEXT_TO_CAD_HOME` moves the state.
 
+The plugin's MCP server is `cad-mcp`, which T3 Code starts with `uvx`, so `uv` must be on PATH. It
+reaches the computer's one `cad` server, the one every agent app shares, and on a computer with none
+it installs and registers that server first, so `~/.t3code-text-to-cad` holds only T3 Code's own
+state. The skills run `cad <verb>`, so the `cad` command must be on PATH too: text-to-cad's
+install script (`install.sh`, `install.ps1` on Windows) registers it.
+
 ## What it adds to T3 Code
 
 Everything here is upstream T3 Code plus the fork's plugin support (`amy/plugins`), generic to any
